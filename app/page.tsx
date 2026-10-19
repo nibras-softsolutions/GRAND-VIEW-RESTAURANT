@@ -11,8 +11,8 @@ import FoodListItem from '@/components/FoodListItem';
 import StickyCartBar from '@/components/StickyCartBar';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import Footer from '@/components/Footer';
+import { FoodItem, Category } from '@/types';
 import { MENU_ITEMS } from '@/data/menuData';
-import { Category } from '@/types';
 import { Search, Flame, LayoutGrid, ListFilter, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,10 +20,23 @@ export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState<Category>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [dishes, setDishes] = useState<FoodItem[]>(MENU_ITEMS);
+
+  // Fetch dynamic menu from Neon DB
+  React.useEffect(() => {
+    fetch('/api/menu')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.dishes) && data.dishes.length > 0) {
+          setDishes(data.dishes);
+        }
+      })
+      .catch((err) => console.log('Offline: using cached dishes', err));
+  }, []);
 
   // Filter items by category and search
   const filteredPopularItems = useMemo(() => {
-    return MENU_ITEMS.filter((item) => {
+    return dishes.filter((item) => {
       const matchesCategory =
         activeCategory === 'All' || item.category === activeCategory;
       const matchesSearch =
@@ -31,7 +44,7 @@ export default function HomePage() {
         item.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, dishes]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F7F3]">

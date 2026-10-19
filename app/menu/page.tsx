@@ -18,9 +18,22 @@ export default function MenuPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [vegOnly, setVegOnly] = useState(false);
+  const [dishes, setDishes] = useState<any[]>(MENU_ITEMS);
+
+  // Load live dishes from Neon DB
+  React.useEffect(() => {
+    fetch('/api/menu')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.dishes) && data.dishes.length > 0) {
+          setDishes(data.dishes);
+        }
+      })
+      .catch((err) => console.log('Offline: using cached dishes', err));
+  }, []);
 
   const filteredDishes = useMemo(() => {
-    return MENU_ITEMS.filter((item) => {
+    return dishes.filter((item) => {
       const matchesCategory =
         activeCategory === 'All' || item.category === activeCategory;
       const matchesSearch =
@@ -30,7 +43,7 @@ export default function MenuPage() {
       const matchesVeg = vegOnly ? item.isVeg : true;
       return matchesCategory && matchesSearch && matchesVeg;
     });
-  }, [activeCategory, searchQuery, vegOnly]);
+  }, [activeCategory, searchQuery, vegOnly, dishes]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F6F1]">

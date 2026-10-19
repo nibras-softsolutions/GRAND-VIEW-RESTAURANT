@@ -27,6 +27,8 @@ export default function Header({ onSearchClick, transparentHero = false }: Heade
   const { totalCount, setIsCartDrawerOpen } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isStoreOpen, setIsStoreOpen] = useState(true);
+  const [storeNotice, setStoreNotice] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,6 +38,18 @@ export default function Header({ onSearchClick, transparentHero = false }: Heade
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.general?.isOpen !== undefined) {
+          setIsStoreOpen(Boolean(data.general.isOpen));
+          setStoreNotice(data.general.closureNotice || '');
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
+
   const navLinks = [
     { label: 'Home', href: '/' },
     { label: 'Menu', href: '/menu' },
@@ -44,6 +58,11 @@ export default function Header({ onSearchClick, transparentHero = false }: Heade
 
   return (
     <>
+      {!isStoreOpen && (
+        <div className="bg-[#1D1B18] text-[#E5C07B] py-2 px-4 text-xs font-semibold text-center border-b border-[#C99A4A]/30">
+          <span>{storeNotice || "We're currently closed. We'll be accepting orders again at 11:00 AM."}</span>
+        </div>
+      )}
       <header
         className={`sticky top-0 z-30 transition-all duration-200 bg-white/95 backdrop-blur-md border-b border-[#E6E1D5] ${
           isScrolled ? 'shadow-xs' : ''
