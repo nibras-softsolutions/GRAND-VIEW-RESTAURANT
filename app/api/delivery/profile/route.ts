@@ -37,8 +37,24 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { name, vehicle_info, current_password, new_password } = body;
+    const { name, phone, vehicle_info, current_password, new_password } = body;
     const sql = getDb();
+
+    // Validate phone number if provided
+    const cleanPhone = phone?.trim();
+    if (cleanPhone) {
+      const existingWithPhone = await sql`
+        SELECT id FROM delivery_persons 
+        WHERE phone = ${cleanPhone} AND id != ${session.deliveryPerson.id} 
+        LIMIT 1;
+      `;
+      if (existingWithPhone.length > 0) {
+        return NextResponse.json(
+          { error: 'This phone number is already registered to another delivery person.' },
+          { status: 400 }
+        );
+      }
+    }
 
     // If changing password, verify current password
     if (new_password) {
@@ -61,6 +77,7 @@ export async function PUT(request: Request) {
         UPDATE delivery_persons 
         SET 
           name = COALESCE(${name}, name),
+          phone = COALESCE(${cleanPhone}, phone),
           vehicle_info = COALESCE(${vehicle_info}, vehicle_info),
           password_hash = ${newHash},
           updated_at = CURRENT_TIMESTAMP
@@ -71,13 +88,25 @@ export async function PUT(request: Request) {
         UPDATE delivery_persons 
         SET 
           name = COALESCE(${name}, name),
+          phone = COALESCE(${cleanPhone}, phone),
           vehicle_info = COALESCE(${vehicle_info}, vehicle_info),
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ${session.deliveryPerson.id};
       `;
     }
 
-    return NextResponse.json({ success: true, message: 'Profile updated successfully.' });
+    const updated = await sql`
+      SELECT id, name, phone, vehicle_info, active, last_login_at, created_at
+      FROM delivery_persons
+      WHERE id = ${session.deliveryPerson.id}
+      LIMIT 1;
+    `;
+
+    return NextResponse.json({
+      success: true,
+      message: 'Profile updated successfully.',
+      profile: updated[0],
+    });
   } catch (error) {
     console.error('Delivery profile PUT error:', error);
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });

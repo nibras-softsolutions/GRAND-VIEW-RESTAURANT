@@ -251,15 +251,13 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={() => setOrderType('delivery')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-                  orderType === 'delivery'
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${orderType === 'delivery'
                     ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
                     : 'border-[#E6E1D5] bg-white hover:border-[#C99A4A]/50'
-                }`}
+                  }`}
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                  orderType === 'delivery' ? 'bg-[#C99A4A] text-white' : 'bg-[#FAF8F5] text-[#77736C]'
-                }`}>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${orderType === 'delivery' ? 'bg-[#C99A4A] text-white' : 'bg-[#FAF8F5] text-[#77736C]'
+                  }`}>
                   <Bike className="w-5 h-5" />
                 </div>
                 <div>
@@ -273,15 +271,13 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={() => setOrderType('pickup')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-                  orderType === 'pickup'
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${orderType === 'pickup'
                     ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
                     : 'border-[#E6E1D5] bg-white hover:border-[#C99A4A]/50'
-                }`}
+                  }`}
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                  orderType === 'pickup' ? 'bg-[#C99A4A] text-white' : 'bg-[#FAF8F5] text-[#77736C]'
-                }`}>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${orderType === 'pickup' ? 'bg-[#C99A4A] text-white' : 'bg-[#FAF8F5] text-[#77736C]'
+                  }`}>
                   <Store className="w-5 h-5" />
                 </div>
                 <div>
@@ -360,11 +356,10 @@ export default function CheckoutPage() {
                           <div
                             key={addr.id}
                             onClick={() => handleSelectSavedAddress(addr)}
-                            className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${
-                              isSelected
+                            className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${isSelected
                                 ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
                                 : 'border-[#E6E1D5] bg-[#FAF9F6] hover:border-[#C99A4A]/50'
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center justify-between font-bold text-[#1A1814]">
                               <span className="flex items-center gap-1.5">
@@ -496,11 +491,10 @@ export default function CheckoutPage() {
             <div className="space-y-2">
               <label
                 onClick={() => setPaymentMethod('cash-on-delivery')}
-                className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === 'cash-on-delivery'
+                className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'cash-on-delivery'
                     ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
                     : 'border-[#E6E1D5] bg-white hover:border-[#C99A4A]/50'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
@@ -526,11 +520,10 @@ export default function CheckoutPage() {
 
               <label
                 onClick={() => setPaymentMethod('online-payment')}
-                className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === 'online-payment'
+                className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'online-payment'
                     ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
                     : 'border-[#E6E1D5] bg-white hover:border-[#C99A4A]/50'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
@@ -557,11 +550,10 @@ export default function CheckoutPage() {
               {isPickup && (
                 <label
                   onClick={() => setPaymentMethod('pay-at-pickup')}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
-                    paymentMethod === 'pay-at-pickup'
+                  className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'pay-at-pickup'
                       ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
                       : 'border-[#E6E1D5] bg-white hover:border-[#C99A4A]/50'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">

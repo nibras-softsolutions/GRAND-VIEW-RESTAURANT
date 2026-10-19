@@ -20,6 +20,7 @@ export default function DeliveryProfilePage() {
   const [loading, setLoading] = useState(true);
 
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [vehicleInfo, setVehicleInfo] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -34,6 +35,7 @@ export default function DeliveryProfilePage() {
         if (data && data.profile) {
           setProfile(data.profile);
           setName(data.profile.name || '');
+          setPhone(data.profile.phone || '');
           setVehicleInfo(data.profile.vehicle_info || '');
         }
       })
@@ -46,7 +48,7 @@ export default function DeliveryProfilePage() {
     setSaving(true);
 
     try {
-      const payload: any = { name, vehicle_info: vehicleInfo };
+      const payload: any = { name, phone: phone.trim(), vehicle_info: vehicleInfo };
       if (newPassword) {
         payload.current_password = currentPassword;
         payload.new_password = newPassword;
@@ -63,6 +65,12 @@ export default function DeliveryProfilePage() {
         setMessage({ text: data.error || 'Failed to update profile.', type: 'error' });
       } else {
         setMessage({ text: 'Profile updated successfully.', type: 'success' });
+        if (data.profile) {
+          setProfile(data.profile);
+          setName(data.profile.name || '');
+          setPhone(data.profile.phone || '');
+          setVehicleInfo(data.profile.vehicle_info || '');
+        }
         setCurrentPassword('');
         setNewPassword('');
       }
@@ -137,6 +145,26 @@ export default function DeliveryProfilePage() {
             onChange={(e) => setName(e.target.value)}
             className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#E6E1D5] text-xs text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
           />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-[#1A1814] mb-1">
+            Mobile Number (Login & Delivery Contact)
+          </label>
+          <div className="relative">
+            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#77736C]" />
+            <input
+              type="tel"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+91 94471 23456"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#E6E1D5] text-xs text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
+            />
+          </div>
+          <p className="text-[10px] text-[#77736C] mt-1">
+            Used to sign in to the delivery portal and coordinate orders with customers.
+          </p>
         </div>
 
         <div>
