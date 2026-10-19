@@ -5,7 +5,8 @@ export type Category =
   | 'Beverages' 
   | 'Desserts' 
   | 'Healthy' 
-  | 'Snacks';
+  | 'Snacks'
+  | string;
 
 export interface AddOn {
   id: string;
@@ -16,7 +17,7 @@ export interface AddOn {
 export interface FoodItem {
   id: string;
   name: string;
-  category: Category;
+  category: string;
   description: string;
   price: number;
   rating: number;
@@ -45,14 +46,28 @@ export interface CartItem {
 }
 
 export type OrderType = 'delivery' | 'pickup';
-export type PaymentMethod = 'cash-on-delivery' | 'online-payment' | 'pay-at-pickup' | 'pay-at-hotel' | 'add-to-room';
-export type OrderStatus = 'confirmed' | 'preparing' | 'out_for_delivery' | 'ready_for_pickup' | 'delivered';
+export type PaymentMethod = 'cash-on-delivery' | 'online-payment' | 'pay-at-pickup' | 'upi-qr';
+export type OrderStatus = 
+  | 'pending' 
+  | 'confirmed' 
+  | 'preparing' 
+  | 'ready' 
+  | 'ready_for_pickup' 
+  | 'out_for_delivery' 
+  | 'delivered' 
+  | 'rejected';
 
 export interface SavedAddress {
   id: string;
-  label: 'Home' | 'Work' | 'Other';
-  address: string;
-  landmark?: string;
+  label: string; // 'Home' | 'Work' | 'Other'
+  fullName?: string;
+  phone?: string;
+  island: string; // e.g. 'Amini', 'Kavaratti', 'Agatti', 'Kadmat', 'Andrott', etc.
+  houseName: string; // e.g. 'ABC House'
+  locality: string; // e.g. 'Near Mosque'
+  landmark?: string; // e.g. 'Opposite XYZ'
+  deliveryInstructions?: string; // e.g. 'Please call when you reach nearby.'
+  address?: string; // combined summary string
   isDefault?: boolean;
 }
 
@@ -67,6 +82,16 @@ export interface CustomerProfile {
   };
 }
 
+export interface DeliveryPerson {
+  id: string;
+  name: string;
+  phone: string;
+  vehicleInfo?: string;
+  active: boolean;
+  activeOrdersCount?: number;
+  createdAt?: string;
+}
+
 export interface Order {
   id: string; // e.g. #GV20261019
   createdAt: string;
@@ -76,16 +101,24 @@ export interface Order {
   tax: number;
   total: number;
   orderType: OrderType;
+  // Local delivery address snapshot
   deliveryAddress: string;
+  island?: string;
+  houseName?: string;
+  locality?: string;
   landmark?: string;
+  deliveryInstructions?: string;
   customerName: string;
-  guestName?: string; // backward compatibility
-  roomNumber?: string; // backward compatibility
   phone: string;
   paymentMethod: PaymentMethod;
   paymentSubOption?: 'cash' | 'card' | 'upi';
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
   status: OrderStatus;
-  estimatedTime: string;
+  deliveryStatus?: 'unassigned' | 'assigned' | 'out_for_delivery' | 'delivered';
+  deliveryPersonId?: string;
+  deliveryPersonName?: string;
+  deliveryPersonPhone?: string;
+  estimatedTime?: string;
   timeline: {
     status: OrderStatus;
     title: string;
@@ -95,4 +128,3 @@ export interface Order {
     current?: boolean;
   }[];
 }
-

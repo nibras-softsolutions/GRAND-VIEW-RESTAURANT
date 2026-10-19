@@ -1,19 +1,19 @@
 import React from 'react';
 import Link from 'next/link';
 
-interface HotelLogoProps {
+export interface RestaurantLogoProps {
   variant?: 'light' | 'dark' | 'gold';
   size?: 'sm' | 'md' | 'lg';
   showTagline?: boolean;
   className?: string;
 }
 
-export default function HotelLogo({
+export default function RestaurantLogo({
   variant = 'dark',
   size = 'md',
   showTagline = false,
   className = '',
-}: HotelLogoProps) {
+}: RestaurantLogoProps) {
   const isLight = variant === 'light';
 
   // SVG Lotus / Crown mark
@@ -91,3 +91,6 @@ export default function HotelLogo({
     </Link>
   );
 }
+
+// Backward compatibility export
+export const HotelLogo = RestaurantLogo;

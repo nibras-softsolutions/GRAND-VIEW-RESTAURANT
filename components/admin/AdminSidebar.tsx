@@ -17,6 +17,7 @@ import {
   ChevronRight,
   PlusCircle,
   ExternalLink,
+  Bike,
 } from 'lucide-react';
 import HotelLogo from '@/components/HotelLogo';
 
@@ -25,7 +26,7 @@ interface AdminSidebarProps {
     id: string;
     name: string;
     email: string;
-    role: 'super_admin' | 'manager' | 'staff';
+    role: 'admin' | 'super_admin' | 'manager' | 'staff';
   } | null;
   isOpen: boolean;
   onClose: () => void;
@@ -76,6 +77,11 @@ export default function AdminSidebar({ user, isOpen, onClose }: AdminSidebarProp
       label: 'Customers',
       href: '/admin/customers',
       icon: Users,
+    },
+    {
+      label: 'Delivery Persons',
+      href: '/admin/delivery-persons',
+      icon: Bike,
     },
     {
       label: 'Analytics',

@@ -12,14 +12,15 @@ interface CreateOrderData {
   total: number;
   orderType: OrderType;
   deliveryAddress: string;
+  island?: string;
+  houseName?: string;
+  locality?: string;
   landmark?: string;
+  deliveryInstructions?: string;
   customerName: string;
   phone: string;
   paymentMethod: PaymentMethod;
   paymentSubOption?: 'cash' | 'card' | 'upi';
-  // backward compatibility fields
-  roomNumber?: string;
-  guestName?: string;
 }
 
 interface OrderContextType {
@@ -33,7 +34,7 @@ interface OrderContextType {
 
 const DEFAULT_PAST_ORDERS: Order[] = [
   {
-    id: '#GV20261018',
+    id: '#GV20261018-4291',
     createdAt: '18 Oct • 7:15 PM',
     items: [
       {
@@ -58,11 +59,14 @@ const DEFAULT_PAST_ORDERS: Order[] = [
     tax: 0,
     total: 490,
     orderType: 'delivery',
-    deliveryAddress: 'Flat 4B, Marine View Heights, Waterfront Promenade, Kochi',
-    landmark: 'Near Waterfront Light House',
-    customerName: 'Alexander Wright',
-    guestName: 'Alexander Wright',
-    phone: '+91 98765 43210',
+    deliveryAddress: 'Kunnumpuram House, Near Old Juma Masjid, Amini, Lakshadweep',
+    island: 'Amini',
+    houseName: 'Kunnumpuram House',
+    locality: 'Near Old Juma Masjid',
+    landmark: 'Opposite BSNL Tower',
+    deliveryInstructions: 'Please call when you reach nearby.',
+    customerName: 'Mohammed Shafi',
+    phone: '+91 94473 45678',
     paymentMethod: 'cash-on-delivery',
     status: 'delivered',
     estimatedTime: 'Delivered',
@@ -139,7 +143,6 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   }, [currentOrder, isLoaded]);
 
   const generateOrderId = () => {
-    // Generate clean restaurant ID: #GV20261019-XXXX
     const today = new Date();
     const y = today.getFullYear();
     const m = String(today.getMonth() + 1).padStart(2, '0');
@@ -154,10 +157,10 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     const orderId = generateOrderId();
     const isPickup = data.orderType === 'pickup';
 
-    const customerName = data.customerName || data.guestName || RESTAURANT_INFO.defaultCustomer.name;
+    const customerName = data.customerName || 'Mohammed Shafi';
     const address = isPickup
       ? 'Grand View Restaurant (Front Counter Pickup)'
-      : data.deliveryAddress || RESTAURANT_INFO.defaultCustomer.deliveryAddress;
+      : data.deliveryAddress || `${data.houseName || ''}, ${data.locality || ''}, ${data.island || 'Amini'}`;
 
     const newOrder: Order = {
       id: orderId,
@@ -169,10 +172,13 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       total: data.total,
       orderType: data.orderType || 'delivery',
       deliveryAddress: address,
-      landmark: data.landmark,
+      island: isPickup ? undefined : (data.island || 'Amini'),
+      houseName: isPickup ? undefined : data.houseName,
+      locality: isPickup ? undefined : data.locality,
+      landmark: isPickup ? undefined : data.landmark,
+      deliveryInstructions: isPickup ? undefined : data.deliveryInstructions,
       customerName,
-      guestName: customerName,
-      phone: data.phone || RESTAURANT_INFO.defaultCustomer.phone,
+      phone: data.phone || '+91 94473 45678',
       paymentMethod: data.paymentMethod,
       paymentSubOption: data.paymentSubOption,
       status: 'confirmed',
@@ -182,7 +188,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
             {
               status: 'confirmed',
               title: 'Order Confirmed',
-              description: 'Your order has been received and verified by the kitchen.',
+              description: 'Your order has been received and verified by Grand View Restaurant.',
               completed: true,
               current: true,
               time: timeStr,
@@ -195,7 +201,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
               current: false,
             },
             {
-              status: 'out_for_delivery',
+              status: 'ready_for_pickup',
               title: 'Ready for Pickup',
               description: 'Your package is ready at Grand View Restaurant counter.',
               completed: false,
@@ -221,21 +227,21 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
             {
               status: 'preparing',
               title: 'Kitchen Preparing',
-              description: 'Our chefs are cooking your dishes with farm-fresh ingredients.',
+              description: 'Our chefs are cooking your dishes with fresh ingredients.',
               completed: false,
               current: false,
             },
             {
               status: 'out_for_delivery',
               title: 'Out for Delivery',
-              description: `Rider is on the way to ${address}.`,
+              description: `Delivery partner on the way to ${address}.`,
               completed: false,
               current: false,
             },
             {
               status: 'delivered',
               title: 'Delivered',
-              description: 'Order arrived. Enjoy your delicious food!',
+              description: 'Order arrived. Enjoy your meal!',
               completed: false,
               current: false,
             },
@@ -245,81 +251,73 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     setOrders((prev) => [newOrder, ...prev]);
     setCurrentOrder(newOrder);
 
-    // Sync to Neon PostgreSQL
+    // Sync to Neon database
     fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newOrder),
-    }).catch((err) => console.log('Offline: order saved to local state', err));
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.order) {
+          setOrders((prev) =>
+            prev.map((o) => (o.id === newOrder.id ? { ...o, ...data.order } : o))
+          );
+        }
+      })
+      .catch((err) => {
+        console.log('Order created locally; will sync when online', err);
+      });
 
     return newOrder;
   };
 
-  const getOrderById = (id: string) => {
-    const cleanId = decodeURIComponent(id);
-    return orders.find(
-      (o) => o.id.toLowerCase() === cleanId.toLowerCase() || o.id.replace('#', '').toLowerCase() === cleanId.replace('#', '').toLowerCase()
-    );
+  const getOrderById = (id: string): Order | undefined => {
+    const cleanId = id.startsWith('#') ? id : `#${id}`;
+    return orders.find((o) => o.id === cleanId || o.id === id);
   };
 
-  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    const statuses: OrderStatus[] = ['confirmed', 'preparing', 'out_for_delivery', 'delivered'];
-    const targetIdx = statuses.indexOf(newStatus);
-    let targetUpdatedOrder: Order | null = null;
-
+  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
     setOrders((prev) =>
-      prev.map((order) => {
-        if (order.id !== orderId) return order;
-
-        const updatedTimeline = order.timeline.map((step) => {
-          const stepIdx = statuses.indexOf(step.status);
-          return {
-            ...step,
-            completed: stepIdx <= targetIdx,
-            current: step.status === newStatus,
-            time: stepIdx <= targetIdx && !step.time ? 'Just now' : step.time,
+      prev.map((o) => {
+        if (o.id === orderId) {
+          const updated = {
+            ...o,
+            status,
+            timeline: o.timeline.map((step) => ({
+              ...step,
+              completed: step.status === status || step.completed,
+              current: step.status === status,
+            })),
           };
-        });
-
-        const updatedOrder: Order = {
-          ...order,
-          status: newStatus,
-          timeline: updatedTimeline,
-          estimatedTime: newStatus === 'delivered' ? 'Delivered' : newStatus === 'out_for_delivery' ? '5–10 mins' : '15–20 mins',
-        };
-
-        targetUpdatedOrder = updatedOrder;
-
-        if (currentOrder?.id === orderId) {
-          setCurrentOrder(updatedOrder);
+          if (currentOrder?.id === orderId) {
+            setCurrentOrder(updated);
+          }
+          return updated;
         }
-
-        return updatedOrder;
+        return o;
       })
     );
 
-    // Sync status update to Neon PostgreSQL
-    if (targetUpdatedOrder) {
-      fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: newStatus,
-          timeline: (targetUpdatedOrder as Order).timeline,
-        }),
-      }).catch((err) => console.log('Offline: status update saved locally', err));
-    }
+    // Sync to Neon
+    fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    }).catch((err) => console.log('Status update queued locally', err));
   };
 
   const advanceOrderSimulation = (orderId: string) => {
-    const order = orders.find((o) => o.id === orderId);
+    const order = getOrderById(orderId);
     if (!order) return;
 
-    const statuses: OrderStatus[] = ['confirmed', 'preparing', 'out_for_delivery', 'delivered'];
-    const currentIdx = statuses.indexOf(order.status);
-    if (currentIdx < statuses.length - 1) {
-      const nextStatus = statuses[currentIdx + 1];
-      updateOrderStatus(orderId, nextStatus);
+    const sequence: OrderStatus[] = order.orderType === 'pickup'
+      ? ['confirmed', 'preparing', 'ready_for_pickup', 'delivered']
+      : ['confirmed', 'preparing', 'out_for_delivery', 'delivered'];
+
+    const currentIndex = sequence.indexOf(order.status);
+    if (currentIndex < sequence.length - 1) {
+      updateOrderStatus(orderId, sequence[currentIndex + 1]);
     }
   };
 

@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import HotelLogo from './HotelLogo';
-import { Sparkles, Clock, BedDouble, ArrowRight } from 'lucide-react';
+import { Sparkles, Clock, Utensils, ArrowRight } from 'lucide-react';
 
 interface MobileSplashHeroProps {
   onDismiss?: () => void;
@@ -15,8 +15,8 @@ export default function MobileSplashHero({ onDismiss }: MobileSplashHeroProps) {
     <div className="relative w-full min-h-[72vh] md:hidden rounded-b-[36px] overflow-hidden text-white flex flex-col justify-between p-6 shadow-2xl bg-[#25221E]">
       {/* Background Photography with Luxury Dark Overlay */}
       <Image
-        src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80"
-        alt="Grand View Hotel Luxury Resort"
+        src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80"
+        alt="Grand View Restaurant Lakshadweep"
         fill
         className="object-cover"
         priority

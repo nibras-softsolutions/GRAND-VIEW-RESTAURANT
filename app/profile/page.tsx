@@ -207,13 +207,13 @@ export default function ProfilePage() {
                 Saved Delivery Addresses
               </h3>
             </div>
-            <button
-              onClick={() => showToast('Address manager ready — edit in checkout')}
+            <Link
+              href="/profile/addresses"
               className="text-xs font-semibold text-[#C99A4A] hover:underline inline-flex items-center gap-1"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add New</span>
-            </button>
+              <span>Manage Addresses</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
           <div className="space-y-3">

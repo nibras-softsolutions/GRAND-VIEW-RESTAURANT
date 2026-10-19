@@ -18,6 +18,9 @@ import {
   AlertTriangle,
   Play,
   RotateCcw,
+  Home,
+  UserCheck,
+  XCircle,
 } from 'lucide-react';
 import { OrderStatus } from '@/types';
 
@@ -31,8 +34,11 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
   const router = useRouter();
 
   const [order, setOrder] = useState<any | null>(null);
+  const [deliveryPersons, setDeliveryPersons] = useState<any[]>([]);
+  const [selectedDriverId, setSelectedDriverId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [assigning, setAssigning] = useState(false);
 
   const fetchOrderDetail = async () => {
     try {
@@ -41,6 +47,7 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
       if (res.ok) {
         const data = await res.json();
         setOrder(data.order);
+        setSelectedDriverId(data.order.deliveryPersonId || '');
       }
     } catch (e) {
       console.error('Failed to load order', e);
@@ -49,8 +56,21 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
     }
   };
 
+  const fetchDeliveryPersons = async () => {
+    try {
+      const res = await fetch('/api/admin/delivery-persons');
+      if (res.ok) {
+        const data = await res.json();
+        setDeliveryPersons(data.deliveryPersons || []);
+      }
+    } catch (e) {
+      console.error('Failed to load delivery persons', e);
+    }
+  };
+
   useEffect(() => {
     fetchOrderDetail();
+    fetchDeliveryPersons();
   }, [rawId]);
 
   const handleStatusChange = async (newStatus: OrderStatus) => {
@@ -72,6 +92,29 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
       console.error('Failed to update status', e);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleAssignDriver = async (driverId: string) => {
+    try {
+      setAssigning(true);
+      setSelectedDriverId(driverId);
+      const res = await fetch(`/api/admin/orders/${encodeURIComponent(rawId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ delivery_person_id: driverId || null }),
+      });
+
+      if (res.ok) {
+        await fetchOrderDetail();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to assign driver');
+      }
+    } catch (e) {
+      console.error('Failed to assign driver', e);
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -100,11 +143,15 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
 
   // Determine available next step in workflow
   const getNextStep = (status: string) => {
+    if (status === 'pending') return { label: 'Confirm Order', next: 'confirmed' };
     if (status === 'confirmed') return { label: 'Mark as Preparing in Kitchen', next: 'preparing' };
     if (status === 'preparing') {
       return isPickup
-        ? { label: 'Mark Ready for Counter Pickup', next: 'ready_for_pickup' }
-        : { label: 'Hand Over to Valet (Out for Delivery)', next: 'out_for_delivery' };
+        ? { label: 'Mark Ready for Pickup', next: 'ready_for_pickup' }
+        : { label: 'Mark Ready for Delivery', next: 'ready' };
+    }
+    if (status === 'ready') {
+      return { label: 'Dispatch (Out for Delivery)', next: 'out_for_delivery' };
     }
     if (status === 'out_for_delivery' || status === 'ready_for_pickup') {
       return { label: isPickup ? 'Mark as Picked Up' : 'Mark as Delivered', next: 'delivered' };
@@ -115,7 +162,7 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
   const nextAction = getNextStep(order.status);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto text-left">
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -134,7 +181,7 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
                 className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
                   order.status === 'delivered'
                     ? 'bg-emerald-100 text-emerald-800'
-                    : order.status === 'cancelled'
+                    : order.status === 'rejected' || order.status === 'cancelled'
                     ? 'bg-red-100 text-red-800'
                     : 'bg-amber-100 text-amber-800 animate-pulse'
                 }`}
@@ -148,18 +195,31 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
           </div>
         </div>
 
-        {/* Workflow Advance Button */}
-        {nextAction && (
-          <button
-            type="button"
-            disabled={updating}
-            onClick={() => handleStatusChange(nextAction.next as OrderStatus)}
-            className="btn-gold py-2.5 px-5 text-xs font-semibold flex items-center justify-center gap-2 shadow-md shadow-[#C99A4A]/20"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>{nextAction.label}</span>
-          </button>
-        )}
+        {/* Workflow Advance Button & Reject */}
+        <div className="flex items-center gap-2">
+          {order.status === 'pending' && (
+            <button
+              type="button"
+              disabled={updating}
+              onClick={() => handleStatusChange('rejected' as OrderStatus)}
+              className="py-2.5 px-4 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold cursor-pointer"
+            >
+              Reject Order
+            </button>
+          )}
+
+          {nextAction && (
+            <button
+              type="button"
+              disabled={updating}
+              onClick={() => handleStatusChange(nextAction.next as OrderStatus)}
+              className="btn-gold py-2.5 px-5 text-xs font-semibold flex items-center justify-center gap-2 shadow-md shadow-[#C99A4A]/20 cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>{nextAction.label}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -187,10 +247,10 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
                     )}
                     <div>
                       <p className="font-bold text-[#1A1814] text-sm">
-                        {item.foodItem?.name || 'Dish'}
+                        {item.foodItem?.name || item.name || 'Dish'}
                       </p>
                       <p className="text-xs text-[#77736C]">
-                        ₹{item.foodItem?.price} × {item.quantity}
+                        ₹{item.foodItem?.price || item.price} × {item.quantity}
                       </p>
                       {item.selectedAddOns?.length > 0 && (
                         <p className="text-[11px] text-[#C99A4A] mt-0.5">
@@ -201,7 +261,7 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
                   </div>
 
                   <span className="font-bold text-sm text-[#1A1814]">
-                    ₹{item.itemTotal}
+                    ₹{item.itemTotal || ((item.foodItem?.price || item.price) * item.quantity)}
                   </span>
                 </div>
               ))}
@@ -258,11 +318,80 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
                 </div>
               ))}
             </div>
+
+            {/* Audit History Log */}
+            {order.history && order.history.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-[#E6E1D5]/70">
+                <p className="text-xs font-bold text-[#1A1814] uppercase tracking-wider mb-2">
+                  Action History Log
+                </p>
+                <div className="space-y-1.5 text-[11px] text-[#77736C]">
+                  {order.history.map((h: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between bg-[#FAF9F6] p-2 rounded-lg border border-[#E6E1D5]">
+                      <span>
+                        <strong className="text-[#1A1814]">{h.actor_name || h.actor_role}</strong>: {h.notes || `Changed to ${h.status}`}
+                      </span>
+                      <span className="text-[10px] text-[#A0988C]">
+                        {new Date(h.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Column: Customer & Delivery Information */}
+        {/* Right Column: Customer, Delivery Person Assignment & Address */}
         <div className="lg:col-span-4 space-y-6">
+          {/* Assign Delivery Partner Card */}
+          {!isPickup && (
+            <div className="bg-white rounded-2xl p-5 border border-[#E6E1D5] shadow-xs space-y-3">
+              <div className="flex items-center gap-2 text-[#C99A4A]">
+                <Bike className="w-4 h-4" />
+                <h4 className="font-serif text-sm font-bold text-[#1A1814]">
+                  Assign Delivery Partner
+                </h4>
+              </div>
+
+              {order.deliveryPersonName ? (
+                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs space-y-1">
+                  <p className="text-[10px] uppercase font-bold text-emerald-800">Assigned Partner</p>
+                  <p className="font-bold text-sm text-[#1A1814]">{order.deliveryPersonName}</p>
+                  <p className="text-[#77736C]">{order.deliveryPersonPhone}</p>
+                  {order.deliveryPersonVehicle && (
+                    <p className="text-[11px] text-[#77736C]">Vehicle: {order.deliveryPersonVehicle}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800">
+                  <span className="font-bold">Unassigned:</span> Select a delivery driver below to assign this order.
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[11px] font-semibold text-[#1A1814] mb-1">
+                  Choose Active Delivery Partner
+                </label>
+                <select
+                  value={selectedDriverId}
+                  onChange={(e) => handleAssignDriver(e.target.value)}
+                  disabled={assigning}
+                  className="w-full px-3 py-2 rounded-xl border border-[#E6E1D5] bg-[#FAF9F6] text-xs text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
+                >
+                  <option value="">-- Select Delivery Partner --</option>
+                  {deliveryPersons
+                    .filter((dp) => dp.active)
+                    .map((dp) => (
+                      <option key={dp.id} value={dp.id}>
+                        {dp.name} ({dp.phone}) {dp.vehicleInfo ? `• ${dp.vehicleInfo}` : ''}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* Customer Details */}
           <div className="bg-white rounded-2xl p-5 border border-[#E6E1D5] shadow-xs space-y-3">
             <h4 className="font-serif text-sm font-bold text-[#1A1814]">
@@ -272,7 +401,7 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
               <p className="font-bold text-sm text-[#1A1814]">{order.customerName}</p>
               <a
                 href={`tel:${order.phone}`}
-                className="flex items-center gap-2 text-[#C99A4A] hover:underline"
+                className="flex items-center gap-2 text-[#C99A4A] hover:underline font-semibold"
               >
                 <Phone className="w-3.5 h-3.5" />
                 <span>{order.phone}</span>
@@ -286,24 +415,56 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
             </div>
           </div>
 
-          {/* Delivery Destination */}
+          {/* Structured Local Delivery Address */}
           <div className="bg-white rounded-2xl p-5 border border-[#E6E1D5] shadow-xs space-y-3">
             <h4 className="font-serif text-sm font-bold text-[#1A1814]">
-              {isPickup ? 'Pickup Location' : 'Delivery Destination'}
+              {isPickup ? 'Pickup Location' : 'Local Delivery Address'}
             </h4>
-            <div className="text-xs space-y-1.5 text-[#1A1814]">
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-[#C99A4A] shrink-0 mt-0.5" />
-                <p className="font-medium leading-relaxed">
-                  {order.deliveryAddress || 'Grand View Restaurant Counter'}
-                </p>
+            
+            {isPickup ? (
+              <div className="text-xs text-[#1A1814] flex items-center gap-2">
+                <Store className="w-4 h-4 text-[#C99A4A]" />
+                <span>Front Counter Pickup at Grand View Restaurant</span>
               </div>
-              {order.landmark && (
-                <p className="text-[11px] text-[#77736C] pl-6">
-                  Landmark: {order.landmark}
-                </p>
-              )}
-            </div>
+            ) : (
+              <div className="text-xs space-y-2 text-[#1A1814]">
+                <div className="bg-[#FAF9F6] p-2.5 rounded-xl border border-[#E6E1D5]">
+                  <span className="text-[10px] text-[#77736C] uppercase font-bold block">
+                    Island & Locality
+                  </span>
+                  <p className="font-bold text-sm">
+                    {order.island || 'Amini'} • {order.locality || 'Locality'}
+                  </p>
+                </div>
+
+                <div className="bg-[#FAF9F6] p-2.5 rounded-xl border border-[#E6E1D5]">
+                  <span className="text-[10px] text-[#77736C] uppercase font-bold block">
+                    House Name / Number
+                  </span>
+                  <p className="font-bold">
+                    {order.houseName || order.deliveryAddress}
+                  </p>
+                </div>
+
+                {order.landmark && (
+                  <div className="bg-[#FAF9F6] p-2.5 rounded-xl border border-[#E6E1D5]">
+                    <span className="text-[10px] text-[#77736C] uppercase font-bold block">
+                      Landmark
+                    </span>
+                    <p>{order.landmark}</p>
+                  </div>
+                )}
+
+                {order.deliveryInstructions && (
+                  <div className="bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-amber-900">
+                    <span className="text-[10px] uppercase font-bold block text-amber-800">
+                      Delivery Instructions
+                    </span>
+                    <p className="font-medium">{order.deliveryInstructions}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Payment Details */}
@@ -319,30 +480,8 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
                 </span>
               </div>
               <p className="text-[11px] text-[#77736C]">
-                Total Paid / Due: <span className="font-bold text-[#1A1814]">₹{order.total}</span>
+                Total: <span className="font-bold text-[#1A1814]">₹{order.total}</span>
               </p>
-            </div>
-          </div>
-
-          {/* Manual Status Override */}
-          <div className="bg-[#FAF8F5] rounded-2xl p-4 border border-[#E6E1D5] space-y-2">
-            <p className="text-xs font-bold text-[#1A1814]">Manual Status Override</p>
-            <p className="text-[11px] text-[#77736C]">Change status directly if needed:</p>
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {['confirmed', 'preparing', isPickup ? 'ready_for_pickup' : 'out_for_delivery', 'delivered', 'cancelled'].map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => handleStatusChange(st as OrderStatus)}
-                  className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-colors ${
-                    order.status === st
-                      ? 'bg-[#1D1B18] text-white'
-                      : 'bg-white border border-[#E6E1D5] text-[#77736C] hover:text-[#1A1814]'
-                  }`}
-                >
-                  {st.replace(/_/g, ' ')}
-                </button>
-              ))}
             </div>
           </div>
         </div>

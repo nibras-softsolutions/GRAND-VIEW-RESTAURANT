@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { Order, CartItem, OrderStatus } from '@/types';
+import { logOrderStatusTransition } from '@/lib/auth';
 
 // Helper to format DB row to Order object
 function mapRowToOrder(row: any): Order {
@@ -20,10 +21,14 @@ function mapRowToOrder(row: any): Order {
     total: Number(row.total),
     orderType: row.order_type,
     deliveryAddress: row.delivery_address || '',
+    island: row.island || 'Amini',
+    houseName: row.house_name || '',
+    locality: row.locality || '',
     landmark: row.landmark || '',
+    deliveryInstructions: row.delivery_instructions || '',
+    deliveryPersonId: row.delivery_person_id,
+    deliveryStatus: row.delivery_status || 'unassigned',
     customerName: row.customer_name,
-    guestName: row.customer_name,
-    roomNumber: row.landmark || '',
     phone: row.phone,
     paymentMethod: row.payment_method,
     paymentSubOption: row.payment_sub_option,
@@ -172,7 +177,46 @@ export async function POST(request: Request) {
 
     const orderId = orderData.id || `#GV${Date.now().toString().slice(-6)}`;
     const itemsJson = JSON.stringify(validatedItems);
-    const timelineJson = JSON.stringify(orderData.timeline || []);
+
+    const initialStatus = 'confirmed';
+    const initialTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const timeline = [
+      {
+        status: 'confirmed',
+        title: 'Order Confirmed',
+        description: 'Received and confirmed by Grand View Restaurant.',
+        time: initialTimeStr,
+        completed: true,
+        current: true,
+      },
+      {
+        status: 'preparing',
+        title: 'Preparing in Kitchen',
+        description: 'Chefs are cooking your meal fresh.',
+        completed: false,
+      },
+      {
+        status: isPickup ? 'ready_for_pickup' : 'out_for_delivery',
+        title: isPickup ? 'Ready for Pickup' : 'Out for Delivery',
+        description: isPickup
+          ? 'Ready at counter for customer pickup.'
+          : 'Delivery partner on the way to your address.',
+        completed: false,
+      },
+      {
+        status: 'delivered',
+        title: 'Delivered',
+        description: 'Order completed. Bon Appétit!',
+        completed: false,
+      },
+    ];
+
+    const timelineJson = JSON.stringify(timeline);
+
+    const combinedAddress = isPickup
+      ? 'Front Counter Pickup at Grand View Restaurant'
+      : orderData.deliveryAddress || `${orderData.houseName || ''}, ${orderData.locality || ''}, ${orderData.island || 'Amini'}`;
 
     await sql`
       INSERT INTO orders (
@@ -183,7 +227,12 @@ export async function POST(request: Request) {
         phone,
         email,
         delivery_address,
+        island,
+        house_name,
+        locality,
         landmark,
+        delivery_instructions,
+        delivery_status,
         payment_method,
         payment_sub_option,
         subtotal,
@@ -196,19 +245,24 @@ export async function POST(request: Request) {
       ) VALUES (
         ${orderId},
         ${orderData.orderType || 'delivery'},
-        ${orderData.status || 'confirmed'},
-        ${orderData.customerName || orderData.guestName || 'Valued Customer'},
+        ${initialStatus},
+        ${orderData.customerName || 'Valued Customer'},
         ${orderData.phone || ''},
         ${orderData.phone || ''},
-        ${orderData.deliveryAddress || ''},
+        ${combinedAddress},
+        ${orderData.island || 'Amini'},
+        ${orderData.houseName || ''},
+        ${orderData.locality || ''},
         ${orderData.landmark || ''},
+        ${orderData.deliveryInstructions || ''},
+        'unassigned',
         ${orderData.paymentMethod || 'cash-on-delivery'},
         ${orderData.paymentSubOption || null},
         ${calculatedSubtotal},
         ${calculatedDeliveryCharge},
         ${calculatedTax},
         ${authoritativeTotal},
-        ${orderData.estimatedTime || (isPickup ? '15–20 mins' : '30–35 mins')},
+        ${isPickup ? '15–20 mins' : '30–35 mins'},
         ${itemsJson}::jsonb,
         ${timelineJson}::jsonb
       )
@@ -217,6 +271,15 @@ export async function POST(request: Request) {
         timeline = EXCLUDED.timeline,
         updated_at = CURRENT_TIMESTAMP;
     `;
+
+    // Record initial status transition
+    await logOrderStatusTransition(
+      orderId,
+      initialStatus,
+      'customer',
+      orderData.customerName || 'Customer',
+      'Order placed via customer checkout'
+    );
 
     return NextResponse.json({
       success: true,
@@ -228,6 +291,7 @@ export async function POST(request: Request) {
         tax: calculatedTax,
         total: authoritativeTotal,
         items: validatedItems,
+        timeline,
       },
     });
   } catch (error) {

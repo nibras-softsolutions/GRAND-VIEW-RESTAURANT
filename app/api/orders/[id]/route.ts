@@ -20,10 +20,16 @@ function mapRowToOrder(row: any): Order {
     total: Number(row.total),
     orderType: row.order_type,
     deliveryAddress: row.delivery_address || '',
+    island: row.island || 'Amini',
+    houseName: row.house_name || '',
+    locality: row.locality || '',
     landmark: row.landmark || '',
+    deliveryInstructions: row.delivery_instructions || '',
+    deliveryPersonId: row.delivery_person_id,
+    deliveryPersonName: row.delivery_person_name,
+    deliveryPersonPhone: row.delivery_person_phone,
+    deliveryStatus: row.delivery_status || 'unassigned',
     customerName: row.customer_name,
-    guestName: row.customer_name,
-    roomNumber: row.landmark || '',
     phone: row.phone,
     paymentMethod: row.payment_method,
     paymentSubOption: row.payment_sub_option,
@@ -44,8 +50,13 @@ export async function GET(
 
     const sql = getDb();
     const rows = await sql`
-      SELECT * FROM orders 
-      WHERE id = ${normalizedId} OR id = ${orderId}
+      SELECT 
+        o.*,
+        dp.name as delivery_person_name,
+        dp.phone as delivery_person_phone
+      FROM orders o
+      LEFT JOIN delivery_persons dp ON dp.id = o.delivery_person_id
+      WHERE o.id = ${normalizedId} OR o.id = ${orderId}
       LIMIT 1;
     `;
 
@@ -80,35 +91,27 @@ export async function PATCH(
     if (timeline && status) {
       await sql`
         UPDATE orders 
-        SET status = ${status}, 
-            timeline = ${JSON.stringify(timeline)}::jsonb,
-            updated_at = CURRENT_TIMESTAMP
+        SET 
+          status = ${status},
+          timeline = ${JSON.stringify(timeline)}::jsonb,
+          updated_at = CURRENT_TIMESTAMP
         WHERE id = ${normalizedId} OR id = ${orderId};
       `;
     } else if (status) {
       await sql`
         UPDATE orders 
-        SET status = ${status}, 
-            updated_at = CURRENT_TIMESTAMP
+        SET 
+          status = ${status},
+          updated_at = CURRENT_TIMESTAMP
         WHERE id = ${normalizedId} OR id = ${orderId};
       `;
     }
 
-    const rows = await sql`
-      SELECT * FROM orders 
-      WHERE id = ${normalizedId} OR id = ${orderId}
-      LIMIT 1;
-    `;
-
-    if (rows.length === 0) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, order: mapRowToOrder(rows[0]) });
+    return NextResponse.json({ success: true, message: 'Order status updated in Neon' });
   } catch (error) {
-    console.error('Failed to update order in Neon:', error);
+    console.error('Failed to patch order in Neon:', error);
     return NextResponse.json(
-      { error: 'Failed to update order', details: error instanceof Error ? error.message : 'DB error' },
+      { error: 'Failed to update order status', details: error instanceof Error ? error.message : 'DB error' },
       { status: 500 }
     );
   }

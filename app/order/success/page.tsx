@@ -17,7 +17,7 @@ function OrderSuccessContent() {
   const order = getOrderById(orderId) || currentOrder || {
     id: orderId,
     estimatedTime: '30–35 mins',
-    deliveryAddress: 'Flat 4B, Marine View Heights, Kochi',
+    deliveryAddress: 'Kunnumpuram House, Near Old Juma Masjid, Amini, Lakshadweep',
     orderType: 'delivery',
     total: 490,
   };

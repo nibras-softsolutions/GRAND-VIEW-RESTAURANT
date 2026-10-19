@@ -12,40 +12,78 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const search = searchParams.get('search');
-    const limit = Math.min(Number(searchParams.get('limit')) || 50, 100);
+    const deliveryPersonId = searchParams.get('deliveryPersonId');
+    const limit = Math.min(Number(searchParams.get('limit')) || 100, 200);
     const offset = Math.max(Number(searchParams.get('offset')) || 0, 0);
 
     const sql = getDb();
     let rows;
 
-    if (status && status !== 'all') {
+    if (status && status !== 'all' && deliveryPersonId) {
       rows = await sql`
-        SELECT * FROM orders 
-        WHERE status = ${status}
-        ORDER BY created_at DESC 
+        SELECT 
+          o.*,
+          d.name as delivery_person_name,
+          d.phone as delivery_person_phone
+        FROM orders o
+        LEFT JOIN delivery_persons d ON o.delivery_person_id = d.id
+        WHERE o.status = ${status} AND o.delivery_person_id = ${deliveryPersonId}
+        ORDER BY o.created_at DESC 
+        LIMIT ${limit} OFFSET ${offset};
+      `;
+    } else if (status && status !== 'all') {
+      rows = await sql`
+        SELECT 
+          o.*,
+          d.name as delivery_person_name,
+          d.phone as delivery_person_phone
+        FROM orders o
+        LEFT JOIN delivery_persons d ON o.delivery_person_id = d.id
+        WHERE o.status = ${status}
+        ORDER BY o.created_at DESC 
+        LIMIT ${limit} OFFSET ${offset};
+      `;
+    } else if (deliveryPersonId) {
+      rows = await sql`
+        SELECT 
+          o.*,
+          d.name as delivery_person_name,
+          d.phone as delivery_person_phone
+        FROM orders o
+        LEFT JOIN delivery_persons d ON o.delivery_person_id = d.id
+        WHERE o.delivery_person_id = ${deliveryPersonId}
+        ORDER BY o.created_at DESC 
         LIMIT ${limit} OFFSET ${offset};
       `;
     } else {
       rows = await sql`
-        SELECT * FROM orders 
-        ORDER BY created_at DESC 
+        SELECT 
+          o.*,
+          d.name as delivery_person_name,
+          d.phone as delivery_person_phone
+        FROM orders o
+        LEFT JOIN delivery_persons d ON o.delivery_person_id = d.id
+        ORDER BY o.created_at DESC 
         LIMIT ${limit} OFFSET ${offset};
       `;
     }
 
     if (search) {
       const q = search.toLowerCase();
-      rows = rows.filter((r) =>
+      rows = rows.filter((r: any) =>
         r.id.toLowerCase().includes(q) ||
         (r.customer_name && r.customer_name.toLowerCase().includes(q)) ||
-        (r.phone && r.phone.toLowerCase().includes(q))
+        (r.phone && r.phone.toLowerCase().includes(q)) ||
+        (r.delivery_person_name && r.delivery_person_name.toLowerCase().includes(q)) ||
+        (r.island && r.island.toLowerCase().includes(q)) ||
+        (r.house_name && r.house_name.toLowerCase().includes(q))
       );
     }
 
     const totalCountRes = await sql`SELECT count(*) as count FROM orders;`;
 
     return NextResponse.json({
-      orders: rows.map((r) => ({
+      orders: rows.map((r: any) => ({
         id: r.id,
         createdAt: r.created_at ? new Date(r.created_at).toLocaleString('en-IN', {
           day: 'numeric',
@@ -59,7 +97,15 @@ export async function GET(request: Request) {
         phone: r.phone,
         email: r.email,
         deliveryAddress: r.delivery_address,
-        landmark: r.landmark,
+        island: r.island || 'Amini',
+        houseName: r.house_name || '',
+        locality: r.locality || '',
+        landmark: r.landmark || '',
+        deliveryInstructions: r.delivery_instructions || '',
+        deliveryPersonId: r.delivery_person_id,
+        deliveryPersonName: r.delivery_person_name,
+        deliveryPersonPhone: r.delivery_person_phone,
+        deliveryStatus: r.delivery_status || 'unassigned',
         paymentMethod: r.payment_method,
         subtotal: Number(r.subtotal),
         deliveryCharge: Number(r.delivery_charge),

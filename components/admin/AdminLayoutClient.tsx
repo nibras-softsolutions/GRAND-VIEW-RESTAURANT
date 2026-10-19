@@ -11,7 +11,7 @@ interface AdminLayoutClientProps {
     id: string;
     name: string;
     email: string;
-    role: 'super_admin' | 'manager' | 'staff';
+    role: 'admin' | 'super_admin' | 'manager' | 'staff';
   } | null;
 }
 

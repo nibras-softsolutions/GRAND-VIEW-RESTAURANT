@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { getAdminSession, logAdminAction } from '@/lib/auth';
+import { getAdminSession, logAdminAction, logOrderStatusTransition } from '@/lib/auth';
 import { OrderStatus } from '@/types';
 
 // Valid transitions validation matrix
 const VALID_DELIVERY_TRANSITIONS: Record<string, string[]> = {
-  confirmed: ['preparing', 'cancelled'],
-  preparing: ['out_for_delivery', 'cancelled'],
-  out_for_delivery: ['delivered', 'cancelled'],
+  pending: ['confirmed', 'rejected'],
+  confirmed: ['preparing', 'ready', 'rejected'],
+  preparing: ['ready', 'out_for_delivery', 'rejected'],
+  ready: ['out_for_delivery', 'delivered', 'rejected'],
+  out_for_delivery: ['delivered', 'rejected'],
   delivered: [], // Terminal
-  cancelled: [], // Terminal
+  rejected: [],  // Terminal
 };
 
 const VALID_PICKUP_TRANSITIONS: Record<string, string[]> = {
-  confirmed: ['preparing', 'cancelled'],
-  preparing: ['ready_for_pickup', 'cancelled'],
-  ready_for_pickup: ['delivered', 'cancelled'],
+  pending: ['confirmed', 'rejected'],
+  confirmed: ['preparing', 'ready_for_pickup', 'rejected'],
+  preparing: ['ready_for_pickup', 'delivered', 'rejected'],
+  ready_for_pickup: ['delivered', 'rejected'],
   delivered: [],
-  cancelled: [],
+  rejected: [],
 };
 
 export async function GET(
@@ -36,8 +39,14 @@ export async function GET(
 
     const sql = getDb();
     const rows = await sql`
-      SELECT * FROM orders 
-      WHERE id = ${normalizedId} OR id = ${orderId} 
+      SELECT 
+        o.*,
+        d.name as delivery_person_name,
+        d.phone as delivery_person_phone,
+        d.vehicle_info as delivery_person_vehicle
+      FROM orders o
+      LEFT JOIN delivery_persons d ON o.delivery_person_id = d.id
+      WHERE o.id = ${normalizedId} OR o.id = ${orderId} 
       LIMIT 1;
     `;
 
@@ -46,6 +55,15 @@ export async function GET(
     }
 
     const r = rows[0];
+
+    // Fetch status history
+    const historyRows = await sql`
+      SELECT status, actor_role, actor_name, notes, created_at 
+      FROM order_status_history 
+      WHERE order_id = ${r.id} 
+      ORDER BY created_at ASC;
+    `;
+
     return NextResponse.json({
       order: {
         id: r.id,
@@ -60,7 +78,16 @@ export async function GET(
         phone: r.phone,
         email: r.email,
         deliveryAddress: r.delivery_address,
-        landmark: r.landmark,
+        island: r.island || 'Amini',
+        houseName: r.house_name || '',
+        locality: r.locality || '',
+        landmark: r.landmark || '',
+        deliveryInstructions: r.delivery_instructions || '',
+        deliveryPersonId: r.delivery_person_id,
+        deliveryPersonName: r.delivery_person_name,
+        deliveryPersonPhone: r.delivery_person_phone,
+        deliveryPersonVehicle: r.delivery_person_vehicle,
+        deliveryStatus: r.delivery_status || 'unassigned',
         paymentMethod: r.payment_method,
         paymentSubOption: r.payment_sub_option,
         subtotal: Number(r.subtotal),
@@ -72,6 +99,7 @@ export async function GET(
         estimatedTime: r.estimated_time,
         items: typeof r.items === 'string' ? JSON.parse(r.items) : r.items || [],
         timeline: typeof r.timeline === 'string' ? JSON.parse(r.timeline) : r.timeline || [],
+        history: historyRows,
       },
     });
   } catch (error) {
@@ -95,11 +123,7 @@ export async function PATCH(
     const normalizedId = orderId.startsWith('#') ? orderId : `#${orderId}`;
 
     const body = await request.json();
-    const { status: targetStatus } = body as { status: OrderStatus };
-
-    if (!targetStatus) {
-      return NextResponse.json({ error: 'New status is required' }, { status: 400 });
-    }
+    const { status: targetStatus, delivery_person_id } = body;
 
     const sql = getDb();
     const existing = await sql`
@@ -116,79 +140,159 @@ export async function PATCH(
     const currentStatus = currentOrder.status;
     const isPickup = currentOrder.order_type === 'pickup';
 
-    // Transition safety verification (Super Admin can override if needed, but staff/manager follow workflow)
-    if (session.user.role !== 'super_admin') {
+    // 1. Assign Delivery Person
+    if (delivery_person_id !== undefined) {
+      if (delivery_person_id) {
+        // Verify active
+        const dRows = await sql`SELECT id, name, phone, active FROM delivery_persons WHERE id = ${delivery_person_id} LIMIT 1;`;
+        if (dRows.length === 0 || !dRows[0].active) {
+          return NextResponse.json({ error: 'Selected delivery person is not active or does not exist.' }, { status: 400 });
+        }
+
+        const dp = dRows[0];
+        await sql`
+          UPDATE orders 
+          SET 
+            delivery_person_id = ${dp.id},
+            delivery_status = 'assigned',
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${currentOrder.id};
+        `;
+
+        await logOrderStatusTransition(
+          currentOrder.id,
+          currentStatus,
+          'admin',
+          session.user.name,
+          `Assigned to delivery partner ${dp.name} (${dp.phone})`
+        );
+
+        await logAdminAction(
+          session.user.id,
+          session.user.name,
+          'ASSIGN_DELIVERY_PERSON',
+          'order',
+          currentOrder.id,
+          { deliveryPersonId: dp.id, deliveryPersonName: dp.name }
+        );
+      } else {
+        // Unassign
+        await sql`
+          UPDATE orders 
+          SET 
+            delivery_person_id = NULL,
+            delivery_status = 'unassigned',
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${currentOrder.id};
+        `;
+      }
+    }
+
+    // 2. Status Update
+    if (targetStatus && targetStatus !== currentStatus) {
       const allowedNext = isPickup
         ? VALID_PICKUP_TRANSITIONS[currentStatus] || []
         : VALID_DELIVERY_TRANSITIONS[currentStatus] || [];
 
-      if (!allowedNext.includes(targetStatus) && currentStatus !== targetStatus) {
+      if (!allowedNext.includes(targetStatus)) {
         return NextResponse.json(
           {
-            error: `Invalid transition from "${currentStatus}" to "${targetStatus}". Allowed next steps: ${allowedNext.join(', ')}`,
+            error: `Invalid status transition from "${currentStatus}" to "${targetStatus}". Allowed next steps: ${allowedNext.join(', ')}`,
           },
           { status: 400 }
         );
       }
+
+      // Build updated timeline
+      const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      let timeline = typeof currentOrder.timeline === 'string'
+        ? JSON.parse(currentOrder.timeline)
+        : currentOrder.timeline || [];
+
+      const statusHierarchy = isPickup
+        ? ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'delivered']
+        : ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
+
+      const targetIdx = statusHierarchy.indexOf(targetStatus);
+
+      timeline = timeline.map((step: any) => {
+        const stepIdx = statusHierarchy.indexOf(step.status);
+        return {
+          ...step,
+          completed: stepIdx <= targetIdx,
+          current: step.status === targetStatus,
+          time: step.status === targetStatus ? nowStr : step.time,
+        };
+      });
+
+      // If target status wasn't already in timeline (e.g. ready or rejected), append it
+      if (!timeline.some((s: any) => s.status === targetStatus)) {
+        timeline.push({
+          status: targetStatus,
+          title: targetStatus === 'rejected' ? 'Order Rejected' : targetStatus === 'ready' ? 'Ready for Dispatch' : targetStatus.replace(/_/g, ' '),
+          description: targetStatus === 'rejected' ? 'Order was cancelled by restaurant.' : `Order marked as ${targetStatus}.`,
+          time: nowStr,
+          completed: true,
+          current: true,
+        });
+      }
+
+      const newEstimatedTime = targetStatus === 'delivered'
+        ? 'Delivered'
+        : targetStatus === 'out_for_delivery' || targetStatus === 'ready' || targetStatus === 'ready_for_pickup'
+        ? '10–15 mins'
+        : targetStatus === 'preparing'
+        ? '15–20 mins'
+        : targetStatus === 'rejected'
+        ? 'Cancelled'
+        : '30–35 mins';
+
+      const newDeliveryStatus = targetStatus === 'out_for_delivery'
+        ? 'out_for_delivery'
+        : targetStatus === 'delivered'
+        ? 'delivered'
+        : currentOrder.delivery_status;
+
+      await sql`
+        UPDATE orders 
+        SET 
+          status = ${targetStatus},
+          delivery_status = ${newDeliveryStatus},
+          estimated_time = ${newEstimatedTime},
+          timeline = ${JSON.stringify(timeline)}::jsonb,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${currentOrder.id};
+      `;
+
+      await logOrderStatusTransition(
+        currentOrder.id,
+        targetStatus,
+        'admin',
+        session.user.name,
+        `Status updated to ${targetStatus}`
+      );
+
+      await logAdminAction(
+        session.user.id,
+        session.user.name,
+        'UPDATE_ORDER_STATUS',
+        'order',
+        currentOrder.id,
+        { from: currentStatus, to: targetStatus }
+      );
     }
-
-    // Build updated timeline
-    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    let timeline = typeof currentOrder.timeline === 'string'
-      ? JSON.parse(currentOrder.timeline)
-      : currentOrder.timeline || [];
-
-    const statusHierarchy = isPickup
-      ? ['confirmed', 'preparing', 'ready_for_pickup', 'delivered']
-      : ['confirmed', 'preparing', 'out_for_delivery', 'delivered'];
-
-    const targetIdx = statusHierarchy.indexOf(targetStatus);
-
-    timeline = timeline.map((step: any) => {
-      const stepIdx = statusHierarchy.indexOf(step.status);
-      return {
-        ...step,
-        completed: stepIdx <= targetIdx,
-        current: step.status === targetStatus,
-        time: step.status === targetStatus ? nowStr : step.time,
-      };
-    });
-
-    const newEstimatedTime = targetStatus === 'delivered'
-      ? 'Delivered'
-      : targetStatus === 'out_for_delivery' || targetStatus === 'ready_for_pickup'
-      ? '5–10 mins'
-      : targetStatus === 'preparing'
-      ? '15–20 mins'
-      : '30–35 mins';
-
-    await sql`
-      UPDATE orders 
-      SET 
-        status = ${targetStatus},
-        estimated_time = ${newEstimatedTime},
-        timeline = ${JSON.stringify(timeline)}::jsonb,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${normalizedId} OR id = ${orderId};
-    `;
-
-    // Audit log
-    await logAdminAction(
-      session.user.id,
-      session.user.name,
-      'UPDATE_ORDER_STATUS',
-      'order',
-      normalizedId,
-      { from: currentStatus, to: targetStatus }
-    );
 
     return NextResponse.json({
       success: true,
-      message: `Order status updated to ${targetStatus}`,
-      status: targetStatus,
+      message: 'Order updated successfully.',
+      order: {
+        id: currentOrder.id,
+        status: targetStatus || currentStatus,
+        delivery_person_id: delivery_person_id !== undefined ? delivery_person_id : currentOrder.delivery_person_id,
+      },
     });
   } catch (error) {
     console.error('Admin order PATCH error:', error);
-    return NextResponse.json({ error: 'Failed to update order status' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
   }
 }

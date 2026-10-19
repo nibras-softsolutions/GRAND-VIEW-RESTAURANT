@@ -9,13 +9,16 @@ interface ToastMessage {
   text: string;
 }
 
-interface CustomerInfo {
+export interface CustomerInfo {
   name: string;
   phone: string;
   email: string;
-  deliveryAddress: string;
+  island?: string;
+  houseName?: string;
+  locality?: string;
   landmark?: string;
-  roomNumber?: string; // backward compatibility
+  deliveryInstructions?: string;
+  deliveryAddress: string;
 }
 
 interface CartContextType {
@@ -39,10 +42,6 @@ interface CartContextType {
   showToast: (text: string, type?: 'success' | 'info' | 'error') => void;
   customerInfo: CustomerInfo;
   updateCustomerInfo: (info: Partial<CustomerInfo>) => void;
-  guestInfo: CustomerInfo; // backward compatibility
-  updateGuestInfo: (info: Partial<CustomerInfo>) => void; // backward compatibility
-  isRoomModalOpen: boolean;
-  setIsRoomModalOpen: (open: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -53,62 +52,144 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [selectedFoodItem, setSelectedFoodItem] = useState<FoodItem | null>(null);
   const [isFoodDetailOpen, setIsFoodDetailOpen] = useState(false);
-  const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    name: 'Alexander Wright',
-    phone: '+91 98765 43210',
-    email: 'alex.wright@example.com',
-    deliveryAddress: 'Flat 4B, Marine View Heights, Waterfront Promenade, Kochi',
-    landmark: 'Near Waterfront Light House',
-    roomNumber: '302',
+    name: 'Mohammed Shafi',
+    phone: '+91 94473 45678',
+    email: 'shafi.amini@example.com',
+    island: 'Amini',
+    houseName: 'Kunnumpuram House',
+    locality: 'Near Old Juma Masjid',
+    landmark: 'Opposite BSNL Tower',
+    deliveryInstructions: 'Please call when you reach nearby.',
+    deliveryAddress: 'Kunnumpuram House, Near Old Juma Masjid, Amini, Lakshadweep',
   });
 
   // Load from localStorage on client mount
   useEffect(() => {
     try {
-      const savedCart = localStorage.getItem('gvh_cart');
+      const savedCart = localStorage.getItem('gvr_cart');
       if (savedCart) {
         setCart(JSON.parse(savedCart));
       }
-      const savedCustomer = localStorage.getItem('gvh_customer') || localStorage.getItem('gvh_guest');
-      if (savedCustomer) {
-        setCustomerInfo(JSON.parse(savedCustomer));
+      const savedCust = localStorage.getItem('gvr_customer');
+      if (savedCust) {
+        setCustomerInfo(JSON.parse(savedCust));
       }
     } catch (e) {
-      console.error('Failed to load storage', e);
+      console.error('Failed to parse cart storage', e);
     }
     setIsLoaded(true);
   }, []);
 
-  // Save cart to localStorage
+  // Save to localStorage whenever cart changes
   useEffect(() => {
     if (isLoaded) {
       try {
-        localStorage.setItem('gvh_cart', JSON.stringify(cart));
+        localStorage.setItem('gvr_cart', JSON.stringify(cart));
       } catch (e) {
-        console.error('Failed to save cart', e);
+        console.error('Failed to save cart to storage', e);
       }
     }
   }, [cart, isLoaded]);
 
-  // Save customer info to localStorage
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem('gvh_customer', JSON.stringify(customerInfo));
-      } catch (e) {
-        console.error('Failed to save customer', e);
-      }
-    }
-  }, [customerInfo, isLoaded]);
-
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
-    const id = Date.now().toString() + Math.random().toString().slice(2, 5);
-    setToasts((prev) => [...prev, { id, text, type }]);
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, type, text }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3200);
+    }, 3500);
+  };
+
+  const updateCustomerInfo = (info: Partial<CustomerInfo>) => {
+    setCustomerInfo((prev) => {
+      const updated = { ...prev, ...info };
+      try {
+        localStorage.setItem('gvr_customer', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save customer to storage', e);
+      }
+      return updated;
+    });
+  };
+
+  const generateCartItemId = (foodItemId: string, addOns: AddOn[]) => {
+    const sortedAddonIds = (addOns || [])
+      .map((a) => a.id)
+      .sort()
+      .join('-');
+    return `${foodItemId}_${sortedAddonIds}`;
+  };
+
+  const addToCart = (
+    item: FoodItem,
+    quantity: number = 1,
+    selectedAddOns: AddOn[] = [],
+    specialInstructions?: string
+  ) => {
+    const cartItemId = generateCartItemId(item.id, selectedAddOns);
+    const addonsPrice = selectedAddOns.reduce((sum, a) => sum + a.price, 0);
+    const itemTotal = (item.price + addonsPrice) * quantity;
+
+    setCart((prevCart) => {
+      const existingIndex = prevCart.findIndex((ci) => ci.cartItemId === cartItemId);
+      if (existingIndex > -1) {
+        const updated = [...prevCart];
+        const newQty = updated[existingIndex].quantity + quantity;
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: newQty,
+          itemTotal: (item.price + addonsPrice) * newQty,
+          specialInstructions: specialInstructions || updated[existingIndex].specialInstructions,
+        };
+        return updated;
+      } else {
+        return [
+          ...prevCart,
+          {
+            cartItemId,
+            foodItem: item,
+            quantity,
+            selectedAddOns,
+            specialInstructions,
+            itemTotal,
+          },
+        ];
+      }
+    });
+
+    showToast(`Added ${quantity}× ${item.name} to cart`);
+  };
+
+  const updateQuantity = (cartItemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(cartItemId);
+      return;
+    }
+
+    setCart((prevCart) =>
+      prevCart.map((ci) => {
+        if (ci.cartItemId === cartItemId) {
+          const addonsPrice = ci.selectedAddOns.reduce((sum, a) => sum + a.price, 0);
+          return {
+            ...ci,
+            quantity: newQuantity,
+            itemTotal: (ci.foodItem.price + addonsPrice) * newQuantity,
+          };
+        }
+        return ci;
+      })
+    );
+  };
+
+  const removeFromCart = (cartItemId: string) => {
+    setCart((prevCart) => {
+      const item = prevCart.find((ci) => ci.cartItemId === cartItemId);
+      if (item) {
+        showToast(`Removed ${item.foodItem.name} from cart`, 'info');
+      }
+      return prevCart.filter((ci) => ci.cartItemId !== cartItemId);
+    });
   };
 
   const openFoodDetail = (item: FoodItem) => {
@@ -118,84 +199,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const closeFoodDetail = () => {
     setIsFoodDetailOpen(false);
-  };
-
-  const generateCartItemId = (foodId: string, addOns: AddOn[]) => {
-    const addonIds = addOns.map((a) => a.id).sort().join('_');
-    return `${foodId}__${addonIds}`;
-  };
-
-  const calculateItemTotal = (price: number, addOns: AddOn[], quantity: number) => {
-    const addOnTotal = addOns.reduce((sum, a) => sum + a.price, 0);
-    return (price + addOnTotal) * quantity;
-  };
-
-  const addToCart = (
-    item: FoodItem,
-    quantity = 1,
-    selectedAddOns: AddOn[] = [],
-    specialInstructions = ''
-  ) => {
-    const cartItemId = generateCartItemId(item.id, selectedAddOns);
-    setCart((prev) => {
-      const existingIndex = prev.findIndex((c) => c.cartItemId === cartItemId);
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        const newQty = updated[existingIndex].quantity + quantity;
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          quantity: newQty,
-          itemTotal: calculateItemTotal(item.price, selectedAddOns, newQty),
-        };
-        return updated;
-      } else {
-        const newItem: CartItem = {
-          cartItemId,
-          foodItem: item,
-          quantity,
-          selectedAddOns,
-          specialInstructions,
-          itemTotal: calculateItemTotal(item.price, selectedAddOns, quantity),
-        };
-        return [...prev, newItem];
-      }
-    });
-
-    showToast(`${item.name} added to cart`, 'success');
-  };
-
-  const updateQuantity = (cartItemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(cartItemId);
-      return;
-    }
-
-    setCart((prev) =>
-      prev.map((item) => {
-        if (item.cartItemId === cartItemId) {
-          return {
-            ...item,
-            quantity: newQuantity,
-            itemTotal: calculateItemTotal(item.foodItem.price, item.selectedAddOns, newQuantity),
-          };
-        }
-        return item;
-      })
-    );
-  };
-
-  const updateCustomerInfo = (info: Partial<CustomerInfo>) => {
-    setCustomerInfo((prev) => ({ ...prev, ...info }));
-  };
-
-  const updateGuestInfo = updateCustomerInfo;
-
-  const removeFromCart = (cartItemId: string) => {
-    const item = cart.find((c) => c.cartItemId === cartItemId);
-    setCart((prev) => prev.filter((c) => c.cartItemId !== cartItemId));
-    if (item) {
-      showToast(`${item.foodItem.name} removed from cart`, 'info');
-    }
   };
 
   const clearCart = () => {
@@ -231,10 +234,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         showToast,
         customerInfo,
         updateCustomerInfo,
-        guestInfo: customerInfo,
-        updateGuestInfo,
-        isRoomModalOpen,
-        setIsRoomModalOpen,
       }}
     >
       {children}

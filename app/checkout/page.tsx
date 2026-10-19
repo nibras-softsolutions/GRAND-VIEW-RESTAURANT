@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
@@ -8,8 +8,7 @@ import Footer from '@/components/Footer';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { useCart } from '@/context/CartContext';
 import { useOrders } from '@/context/OrderContext';
-import { RESTAURANT_INFO } from '@/data/menuData';
-import { OrderType, PaymentMethod } from '@/types';
+import { OrderType, PaymentMethod, SavedAddress } from '@/types';
 import {
   ArrowLeft,
   Phone,
@@ -23,7 +22,23 @@ import {
   Store,
   CheckCircle2,
   User,
+  Home,
+  Check,
+  Plus,
 } from 'lucide-react';
+
+const LAKSHADWEEP_ISLANDS = [
+  'Amini',
+  'Kavaratti',
+  'Agatti',
+  'Kadmat',
+  'Andrott',
+  'Kalpeni',
+  'Kilthan',
+  'Chetlat',
+  'Bitra',
+  'Minicoy',
+];
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -31,14 +46,65 @@ export default function CheckoutPage() {
   const { createOrder } = useOrders();
 
   const [orderType, setOrderType] = useState<OrderType>('delivery');
-  const [customerName, setCustomerName] = useState(customerInfo.name || 'Alexander Wright');
-  const [phone, setPhone] = useState(customerInfo.phone || '+91 98765 43210');
-  const [deliveryAddress, setDeliveryAddress] = useState(customerInfo.deliveryAddress || 'Flat 4B, Marine View Heights, Waterfront Promenade, Kochi');
-  const [landmark, setLandmark] = useState(customerInfo.landmark || 'Near Waterfront Light House');
+  const [customerName, setCustomerName] = useState(customerInfo.name || 'Mohammed Shafi');
+  const [phone, setPhone] = useState(customerInfo.phone || '+91 94473 45678');
+
+  // Lakshadweep Local Delivery Address Fields
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [useCustomAddress, setUseCustomAddress] = useState(false);
+
+  const [island, setIsland] = useState(customerInfo.island || 'Amini');
+  const [houseName, setHouseName] = useState(customerInfo.houseName || 'Kunnumpuram House');
+  const [locality, setLocality] = useState(customerInfo.locality || 'Near Old Juma Masjid');
+  const [landmark, setLandmark] = useState(customerInfo.landmark || 'Opposite BSNL Tower');
+  const [deliveryInstructions, setDeliveryInstructions] = useState(
+    customerInfo.deliveryInstructions || 'Please call when you reach nearby.'
+  );
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash-on-delivery');
   const [paymentSubOption, setPaymentSubOption] = useState<'cash' | 'card' | 'upi'>('cash');
-  const [errors, setErrors] = useState<{ name?: string; phone?: string; address?: string; cart?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; houseName?: string; locality?: string; cart?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch saved customer addresses from Neon DB
+  useEffect(() => {
+    fetch('/api/customer')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.profile) {
+          if (data.profile.name) setCustomerName(data.profile.name);
+          if (data.profile.phone) setPhone(data.profile.phone);
+          if (data.profile.savedAddresses && data.profile.savedAddresses.length > 0) {
+            setSavedAddresses(data.profile.savedAddresses);
+            const defaultAddr = data.profile.savedAddresses.find((a: SavedAddress) => a.isDefault) || data.profile.savedAddresses[0];
+            if (defaultAddr) {
+              setSelectedAddressId(defaultAddr.id);
+              setIsland(defaultAddr.island || 'Amini');
+              setHouseName(defaultAddr.houseName || '');
+              setLocality(defaultAddr.locality || '');
+              setLandmark(defaultAddr.landmark || '');
+              setDeliveryInstructions(defaultAddr.deliveryInstructions || '');
+            }
+          } else {
+            setUseCustomAddress(true);
+          }
+        }
+      })
+      .catch((err) => console.log('Offline: using local address defaults', err));
+  }, []);
+
+  const handleSelectSavedAddress = (addr: SavedAddress) => {
+    setSelectedAddressId(addr.id);
+    setUseCustomAddress(false);
+    if (addr.fullName) setCustomerName(addr.fullName);
+    if (addr.phone) setPhone(addr.phone);
+    setIsland(addr.island || 'Amini');
+    setHouseName(addr.houseName || '');
+    setLocality(addr.locality || '');
+    setLandmark(addr.landmark || '');
+    setDeliveryInstructions(addr.deliveryInstructions || '');
+  };
 
   // Delivery fee is 0 for pickup, or ₹40 for delivery (free over ₹500)
   const isPickup = orderType === 'pickup';
@@ -46,7 +112,7 @@ export default function CheckoutPage() {
   const effectiveTotal = subtotal + effectiveDeliveryFee + tax;
 
   const validate = () => {
-    const newErrors: { name?: string; phone?: string; address?: string; cart?: string } = {};
+    const newErrors: { name?: string; phone?: string; houseName?: string; locality?: string; cart?: string } = {};
 
     if (cart.length === 0) {
       newErrors.cart = 'Your cart is empty. Please add dishes before placing an order.';
@@ -58,11 +124,16 @@ export default function CheckoutPage() {
 
     const cleanPhone = phone.replace(/[\s-]/g, '');
     if (!cleanPhone || cleanPhone.length < 8) {
-      newErrors.phone = 'Please provide a valid 10-digit phone number for delivery updates.';
+      newErrors.phone = 'Please provide a valid phone number for delivery contact.';
     }
 
-    if (!isPickup && !deliveryAddress.trim()) {
-      newErrors.address = 'Please provide a complete delivery street address.';
+    if (!isPickup) {
+      if (!houseName.trim()) {
+        newErrors.houseName = 'House name or house number is required.';
+      }
+      if (!locality.trim()) {
+        newErrors.locality = 'Area or locality is required.';
+      }
     }
 
     setErrors(newErrors);
@@ -75,11 +146,19 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
 
+    const formattedAddress = isPickup
+      ? 'Grand View Restaurant (Front Counter Pickup)'
+      : `${houseName}, ${locality}, ${island}, Lakshadweep`;
+
     updateCustomerInfo({
       name: customerName,
       phone,
-      deliveryAddress,
+      island,
+      houseName,
+      locality,
       landmark,
+      deliveryInstructions,
+      deliveryAddress: formattedAddress,
     });
 
     const created = createOrder({
@@ -89,8 +168,12 @@ export default function CheckoutPage() {
       tax,
       total: effectiveTotal,
       orderType,
-      deliveryAddress: isPickup ? 'Grand View Restaurant (Front Counter Pickup)' : deliveryAddress,
+      deliveryAddress: formattedAddress,
+      island: isPickup ? undefined : island,
+      houseName: isPickup ? undefined : houseName,
+      locality: isPickup ? undefined : locality,
       landmark: isPickup ? undefined : landmark,
+      deliveryInstructions: isPickup ? undefined : deliveryInstructions,
       customerName,
       phone,
       paymentMethod,
@@ -122,7 +205,7 @@ export default function CheckoutPage() {
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1814]">
               Checkout
             </h1>
-            <p className="text-xs text-[#77736C]">Grand View Restaurant Online Ordering</p>
+            <p className="text-xs text-[#77736C]">Grand View Restaurant • Lakshadweep</p>
           </div>
         </div>
 
@@ -187,10 +270,10 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* 2. CUSTOMER & DELIVERY / PICKUP DETAILS */}
+          {/* 2. CUSTOMER & DELIVERY ADDRESS */}
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E6E1D5] shadow-xs space-y-4">
             <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#77736C]">
-              {isPickup ? 'Customer Details' : 'Delivery Address'}
+              {isPickup ? 'Customer Details' : 'Delivery Address (Lakshadweep)'}
             </h2>
 
             {/* Name input */}
@@ -207,7 +290,7 @@ export default function CheckoutPage() {
                     setCustomerName(e.target.value);
                     if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
                   }}
-                  placeholder="Alexander Wright"
+                  placeholder="Mohammed Shafi"
                   required
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
                 />
@@ -218,7 +301,7 @@ export default function CheckoutPage() {
             {/* Contact phone */}
             <div>
               <label className="text-xs font-semibold text-[#1A1814] block mb-1">
-                Phone Number
+                Mobile Number for Delivery Updates
               </label>
               <div className="relative">
                 <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#77736C]" />
@@ -229,7 +312,7 @@ export default function CheckoutPage() {
                     setPhone(e.target.value);
                     if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
                   }}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 94473 45678"
                   required
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
                 />
@@ -237,222 +320,307 @@ export default function CheckoutPage() {
               {errors.phone && <p className="text-xs text-[#C94A4A] mt-1">{errors.phone}</p>}
             </div>
 
-            {/* If Delivery: Street address & landmark */}
-            {!isPickup ? (
-              <div className="space-y-3 pt-1 border-t border-[#E6E1D5]">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-[#1A1814]">
-                      Complete Street Address
+            {/* Delivery Location Section */}
+            {!isPickup && (
+              <div className="space-y-3 pt-2 border-t border-[#E6E1D5]">
+                {/* Saved addresses selector */}
+                {savedAddresses.length > 0 && (
+                  <div>
+                    <label className="text-xs font-semibold text-[#1A1814] block mb-2">
+                      Choose Saved Address
                     </label>
-                    <span className="text-[10px] text-[#C99A4A] font-semibold">Kochi City Delivery</span>
-                  </div>
-                  <div className="relative">
-                    <MapPin className="absolute left-3.5 top-3 w-4 h-4 text-[#77736C]" />
-                    <textarea
-                      rows={2}
-                      value={deliveryAddress}
-                      onChange={(e) => {
-                        setDeliveryAddress(e.target.value);
-                        if (errors.address) setErrors((prev) => ({ ...prev, address: undefined }));
-                      }}
-                      placeholder="Flat 4B, Marine View Heights, Waterfront Promenade, Kochi"
-                      required
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
-                    />
-                  </div>
-                  {errors.address && <p className="text-xs text-[#C94A4A] mt-1">{errors.address}</p>}
-                </div>
+                    <div className="space-y-2">
+                      {savedAddresses.map((addr) => {
+                        const isSelected = !useCustomAddress && selectedAddressId === addr.id;
+                        return (
+                          <div
+                            key={addr.id}
+                            onClick={() => handleSelectSavedAddress(addr)}
+                            className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                              isSelected
+                                ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
+                                : 'border-[#E6E1D5] bg-[#FAF9F6] hover:border-[#C99A4A]/50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between font-bold text-[#1A1814]">
+                              <span className="flex items-center gap-1.5">
+                                <Home className="w-3.5 h-3.5 text-[#C99A4A]" />
+                                <span>{addr.label}</span>
+                                {addr.isDefault && (
+                                  <span className="text-[10px] bg-[#C99A4A]/10 text-[#C99A4A] px-1.5 py-0.5 rounded-md font-semibold">
+                                    Default
+                                  </span>
+                                )}
+                              </span>
+                              {isSelected && <Check className="w-4 h-4 text-[#C99A4A]" />}
+                            </div>
+                            <p className="font-semibold mt-1 text-[#1A1814]">
+                              {addr.houseName}, {addr.locality} ({addr.island})
+                            </p>
+                            {addr.landmark && (
+                              <p className="text-[11px] text-[#77736C]">Landmark: {addr.landmark}</p>
+                            )}
+                          </div>
+                        );
+                      })}
 
-                <div>
-                  <label className="text-xs font-semibold text-[#1A1814] block mb-1">
-                    Landmark / Delivery Instructions (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={landmark}
-                    onChange={(e) => setLandmark(e.target.value)}
-                    placeholder="e.g. Opposite Waterfront Light House, Gate 2"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
-                  />
-                </div>
-              </div>
-            ) : (
-              /* If Pickup: Restaurant counter address */
-              <div className="p-3.5 rounded-xl bg-[#FBF6EE] border border-[#C99A4A]/30 flex items-start gap-3">
-                <Store className="w-5 h-5 text-[#C99A4A] shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-bold text-[#1A1814]">
-                    Grand View Restaurant Pickup Counter
-                  </h4>
-                  <p className="text-[11px] text-[#77736C] mt-0.5 leading-relaxed">
-                    Marine Promenade, Waterfront Drive, Kochi, Kerala 682001
-                  </p>
-                  <p className="text-[10px] font-semibold text-[#C99A4A] mt-1">
-                    Ready in 15–20 minutes. Please show order confirmation on arrival.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 3. ORDER SUMMARY */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E6E1D5] shadow-xs space-y-3">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#77736C]">
-              Order Summary
-            </h2>
-
-            {cart.length === 0 ? (
-              <p className="text-xs text-[#77736C]">No dishes selected.</p>
-            ) : (
-              <div className="divide-y divide-[#E6E1D5]/70 space-y-2">
-                {cart.map((item) => (
-                  <div key={item.cartItemId} className="pt-2 first:pt-0 flex items-center justify-between text-xs sm:text-sm">
-                    <div>
-                      <span className="font-medium text-[#1A1814]">
-                        {item.foodItem.name} {item.quantity > 1 && `× ${item.quantity}`}
-                      </span>
-                      {item.selectedAddOns.length > 0 && (
-                        <p className="text-[10px] text-[#77736C]">
-                          + {item.selectedAddOns.map((a) => a.name).join(', ')}
-                        </p>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setUseCustomAddress(!useCustomAddress)}
+                        className="text-xs font-semibold text-[#C99A4A] hover:underline flex items-center gap-1 pt-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{useCustomAddress ? 'Use saved address' : 'Enter different delivery address'}</span>
+                      </button>
                     </div>
-                    <span className="font-semibold text-[#1A1814]">
-                      ₹{item.itemTotal}
-                    </span>
                   </div>
-                ))}
+                )}
 
-                <div className="pt-3 space-y-2 text-xs sm:text-sm text-[#77736C]">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span className="font-semibold text-[#1A1814]">₹{subtotal}</span>
+                {/* Local Address Inputs (Always shown if no saved addresses, or if custom address selected) */}
+                {(savedAddresses.length === 0 || useCustomAddress) && (
+                  <div className="space-y-3 pt-2">
+                    <div>
+                      <label className="text-xs font-semibold text-[#1A1814] block mb-1">
+                        Select Island
+                      </label>
+                      <select
+                        value={island}
+                        onChange={(e) => setIsland(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
+                      >
+                        {LAKSHADWEEP_ISLANDS.map((isl) => (
+                          <option key={isl} value={isl}>
+                            {isl} Island
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#1A1814] block mb-1">
+                        House Name / House Number
+                      </label>
+                      <input
+                        type="text"
+                        value={houseName}
+                        onChange={(e) => {
+                          setHouseName(e.target.value);
+                          if (errors.houseName) setErrors((prev) => ({ ...prev, houseName: undefined }));
+                        }}
+                        placeholder="e.g. Kunnumpuram House / ABC House"
+                        required
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
+                      />
+                      {errors.houseName && <p className="text-xs text-[#C94A4A] mt-1">{errors.houseName}</p>}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#1A1814] block mb-1">
+                        Area / Locality
+                      </label>
+                      <input
+                        type="text"
+                        value={locality}
+                        onChange={(e) => {
+                          setLocality(e.target.value);
+                          if (errors.locality) setErrors((prev) => ({ ...prev, locality: undefined }));
+                        }}
+                        placeholder="e.g. Near Old Juma Masjid / Hospital Road"
+                        required
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
+                      />
+                      {errors.locality && <p className="text-xs text-[#C94A4A] mt-1">{errors.locality}</p>}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#1A1814] block mb-1">
+                        Landmark (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={landmark}
+                        onChange={(e) => setLandmark(e.target.value)}
+                        placeholder="e.g. Opposite BSNL Tower / Near Jetty"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#1A1814] block mb-1">
+                        Additional Delivery Instructions (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={deliveryInstructions}
+                        onChange={(e) => setDeliveryInstructions(e.target.value)}
+                        placeholder="e.g. Please call when you reach nearby."
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E6E1D5] text-xs sm:text-sm text-[#1A1814] focus:outline-none focus:border-[#C99A4A]"
+                      />
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Delivery Charge</span>
-                    <span className="font-semibold text-[#1A1814]">
-                      {effectiveDeliveryFee === 0 ? (
-                        <span className="text-emerald-600 font-bold">FREE</span>
-                      ) : (
-                        `₹${effectiveDeliveryFee}`
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>GST & Restaurant Charges (5%)</span>
-                    <span className="font-semibold text-[#1A1814]">₹{tax}</span>
-                  </div>
-                  <div className="border-t border-[#E6E1D5] pt-2.5 flex justify-between text-base font-bold text-[#1A1814]">
-                    <span>Total Amount</span>
-                    <span className="text-xl font-bold text-[#C99A4A]">₹{effectiveTotal}</span>
-                  </div>
-                </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* 4. PAYMENT METHOD */}
+          {/* 3. PAYMENT METHOD */}
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E6E1D5] shadow-xs space-y-3">
             <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#77736C]">
               Payment Method
             </h2>
 
-            <div className="space-y-2.5">
-              {/* Option 1: Cash on Delivery / Pay on Delivery */}
+            <div className="space-y-2">
               <label
-                className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                onClick={() => setPaymentMethod('cash-on-delivery')}
+                className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
                   paymentMethod === 'cash-on-delivery'
-                    ? 'border-[#C99A4A] bg-[#FBF6EE]'
-                    : 'border-[#E6E1D5] hover:border-[#C99A4A]/40'
+                    ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
+                    : 'border-[#E6E1D5] bg-white hover:border-[#C99A4A]/50'
                 }`}
               >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                    <Banknote className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#1A1814] block">
+                      Cash on Delivery
+                    </span>
+                    <span className="text-[11px] text-[#77736C]">
+                      Pay in cash or UPI scan when your food arrives
+                    </span>
+                  </div>
+                </div>
                 <input
                   type="radio"
                   name="paymentMethod"
                   checked={paymentMethod === 'cash-on-delivery'}
                   onChange={() => setPaymentMethod('cash-on-delivery')}
-                  className="mt-0.5 text-[#C99A4A] focus:ring-[#C99A4A]"
+                  className="accent-[#C99A4A]"
                 />
-                <div className="flex-1">
-                  <span className="text-xs sm:text-sm font-bold text-[#1A1814]">
-                    {isPickup ? 'Pay at Counter (Cash / Card)' : 'Cash / Pay on Delivery'}
-                  </span>
-                  <p className="text-[11px] text-[#77736C] mt-0.5">
-                    {isPickup
-                      ? 'Pay with cash, card, or UPI when picking up your order.'
-                      : 'Pay our delivery rider via cash, card machine, or UPI QR code upon arrival.'}
-                  </p>
-
-                  {paymentMethod === 'cash-on-delivery' && !isPickup && (
-                    <div className="flex gap-2 mt-2 pt-2 border-t border-[#E6E1D5]">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentSubOption('cash')}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium border transition-colors ${
-                          paymentSubOption === 'cash'
-                            ? 'bg-[#C99A4A] text-white border-[#C99A4A]'
-                            : 'bg-white text-[#1A1814] border-[#E6E1D5]'
-                        }`}
-                      >
-                        <Banknote className="w-3.5 h-3.5" />
-                        <span>Cash</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPaymentSubOption('card')}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium border transition-colors ${
-                          paymentSubOption === 'card'
-                            ? 'bg-[#C99A4A] text-white border-[#C99A4A]'
-                            : 'bg-white text-[#1A1814] border-[#E6E1D5]'
-                        }`}
-                      >
-                        <CreditCard className="w-3.5 h-3.5" />
-                        <span>Card Machine</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
               </label>
 
-              {/* Option 2: Online Payment / UPI */}
               <label
-                className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                onClick={() => setPaymentMethod('online-payment')}
+                className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
                   paymentMethod === 'online-payment'
-                    ? 'border-[#C99A4A] bg-[#FBF6EE]'
-                    : 'border-[#E6E1D5] hover:border-[#C99A4A]/40'
+                    ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
+                    : 'border-[#E6E1D5] bg-white hover:border-[#C99A4A]/50'
                 }`}
               >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-[#1A1814] block">
+                      UPI / Online Payment
+                    </span>
+                    <span className="text-[11px] text-[#77736C]">
+                      Instant QR transfer / GooglePay / PhonePe
+                    </span>
+                  </div>
+                </div>
                 <input
                   type="radio"
                   name="paymentMethod"
                   checked={paymentMethod === 'online-payment'}
                   onChange={() => setPaymentMethod('online-payment')}
-                  className="mt-0.5 text-[#C99A4A] focus:ring-[#C99A4A]"
+                  className="accent-[#C99A4A]"
                 />
-                <div>
-                  <span className="text-xs sm:text-sm font-bold text-[#1A1814]">
-                    Online Payment (Instant UPI / Cards)
-                  </span>
-                  <p className="text-[11px] text-[#77736C] mt-0.5">
-                    Seamless contactless payment via Google Pay, PhonePe, Paytm or Credit/Debit Card.
-                  </p>
-                </div>
               </label>
+
+              {isPickup && (
+                <label
+                  onClick={() => setPaymentMethod('pay-at-pickup')}
+                  className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
+                    paymentMethod === 'pay-at-pickup'
+                      ? 'border-[#C99A4A] bg-[#FBF6EE] ring-1 ring-[#C99A4A]'
+                      : 'border-[#E6E1D5] bg-white hover:border-[#C99A4A]/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+                      <Store className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs sm:text-sm font-bold text-[#1A1814] block">
+                        Pay at Restaurant Counter
+                      </span>
+                      <span className="text-[11px] text-[#77736C]">
+                        Settle bill when picking up your parcel
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === 'pay-at-pickup'}
+                    onChange={() => setPaymentMethod('pay-at-pickup')}
+                    className="accent-[#C99A4A]"
+                  />
+                </label>
+              )}
             </div>
           </div>
 
-          {/* 5. PLACE ORDER BUTTON */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitting || cart.length === 0}
-              className="w-full btn-gold py-3.5 px-6 text-sm font-semibold flex items-center justify-between disabled:opacity-50 cursor-pointer shadow-md"
-            >
-              <span>{isSubmitting ? 'Placing Order...' : isPickup ? 'Place Takeaway Order' : 'Place Delivery Order'}</span>
-              <span className="font-bold">₹{effectiveTotal}</span>
-            </button>
+          {/* 4. ORDER SUMMARY */}
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E6E1D5] shadow-xs space-y-3">
+            <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#77736C]">
+              Order Summary ({cart.length} items)
+            </h2>
+
+            <div className="divide-y divide-[#E6E1D5]/60 text-xs">
+              {cart.map((item) => (
+                <div key={item.cartItemId} className="py-2.5 flex justify-between">
+                  <div>
+                    <span className="font-bold text-[#1A1814]">{item.quantity}×</span>{' '}
+                    <span className="font-medium text-[#1A1814]">{item.foodItem.name}</span>
+                    {item.selectedAddOns.length > 0 && (
+                      <p className="text-[10px] text-[#77736C]">
+                        + {item.selectedAddOns.map((a) => a.name).join(', ')}
+                      </p>
+                    )}
+                  </div>
+                  <span className="font-semibold text-[#1A1814]">₹{item.itemTotal}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-3 border-t border-[#E6E1D5] space-y-1.5 text-xs text-[#77736C]">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span className="font-medium text-[#1A1814]">₹{subtotal}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Delivery Charge</span>
+                <span className="font-medium text-[#1A1814]">
+                  {effectiveDeliveryFee === 0 ? 'FREE' : `₹${effectiveDeliveryFee}`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>GST (5%)</span>
+                <span className="font-medium text-[#1A1814]">₹{tax}</span>
+              </div>
+              <div className="pt-2 border-t border-[#E6E1D5] flex justify-between text-base font-bold text-[#1A1814]">
+                <span>Total Amount</span>
+                <span className="text-[#C99A4A]">₹{effectiveTotal}</span>
+              </div>
+            </div>
           </div>
+
+          {/* Place Order CTA Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting || cart.length === 0}
+            className="w-full py-4 px-6 rounded-2xl btn-gold text-white font-serif font-bold text-base shadow-lg shadow-[#C99A4A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <span>Place Order (₹{effectiveTotal})</span>
+            )}
+          </button>
         </form>
       </main>
 

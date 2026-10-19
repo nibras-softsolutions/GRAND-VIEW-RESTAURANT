@@ -16,8 +16,10 @@ import {
   ChefHat,
   Bike,
   Sparkles,
-  Play,
-  RotateCcw,
+  Home,
+  MapPin,
+  RefreshCw,
+  AlertCircle,
 } from 'lucide-react';
 
 interface OrderTrackPageProps {
@@ -29,58 +31,69 @@ interface OrderTrackPageProps {
 export default function OrderTrackPage({ params }: OrderTrackPageProps) {
   const resolvedParams = use(params);
   const rawId = decodeURIComponent(resolvedParams.id);
-  const { getOrderById, currentOrder, updateOrderStatus, advanceOrderSimulation } = useOrders();
+  const { getOrderById, currentOrder } = useOrders();
 
-  const [order, setOrder] = useState(() => {
+  const [order, setOrder] = useState<any>(() => {
     return getOrderById(rawId) || currentOrder || {
       id: rawId.startsWith('#') ? rawId : `#${rawId}`,
       createdAt: 'Today • Just now',
       items: [],
-      subtotal: 460,
-      deliveryCharge: 0,
+      subtotal: 450,
+      deliveryCharge: 40,
       tax: 0,
-      total: 460,
+      total: 490,
       orderType: 'delivery' as const,
-      deliveryAddress: 'Suite 4B, Marine Promenade, Kochi',
-      guestName: 'Alexander Wright',
-      phone: '+91 98765 43210',
+      deliveryAddress: 'Kunnumpuram House, Near Old Juma Masjid, Amini, Lakshadweep',
+      island: 'Amini',
+      houseName: 'Kunnumpuram House',
+      locality: 'Near Old Juma Masjid',
+      landmark: 'Opposite BSNL Tower',
+      customerName: 'Mohammed Shafi',
+      phone: '+91 94473 45678',
       paymentMethod: 'cash-on-delivery' as const,
-      status: 'preparing' as OrderStatus,
+      status: 'confirmed' as OrderStatus,
       estimatedTime: '25–30 mins',
       timeline: [
-        { status: 'confirmed' as OrderStatus, title: 'Order Confirmed', description: 'Received by kitchen.', completed: true, time: '8:42 PM' },
-        { status: 'preparing' as OrderStatus, title: 'Preparing in Kitchen', description: 'Chefs are cooking your meal fresh.', completed: true, current: true },
-        { status: 'out_for_delivery' as OrderStatus, title: 'Out for Delivery', description: 'Valet en route to your delivery address.', completed: false },
-        { status: 'delivered' as OrderStatus, title: 'Delivered', description: 'Delivered hot to your door.', completed: false },
+        { status: 'confirmed' as OrderStatus, title: 'Order Confirmed', description: 'Received and confirmed by Grand View Restaurant.', completed: true, time: 'Just now' },
+        { status: 'preparing' as OrderStatus, title: 'Preparing in Kitchen', description: 'Chefs are cooking your meal fresh.', completed: false },
+        { status: 'out_for_delivery' as OrderStatus, title: 'Out for Delivery', description: 'Delivery partner on the way to your address.', completed: false },
+        { status: 'delivered' as OrderStatus, title: 'Delivered', description: 'Delivered to your doorstep.', completed: false },
       ],
     };
   });
 
-  useEffect(() => {
-    const found = getOrderById(rawId);
-    if (found) {
-      setOrder(found);
+  const [loading, setLoading] = useState(false);
+
+  // Poll database for live status updates from Admin or Delivery partner
+  const fetchLiveOrder = async () => {
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(rawId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.order) {
+          setOrder(data.order);
+        }
+      }
+    } catch (e) {
+      console.log('Background poll error', e);
     }
-  }, [rawId, getOrderById]);
-
-  const handleNextStep = () => {
-    advanceOrderSimulation(order.id);
-    const updated = getOrderById(order.id);
-    if (updated) setOrder(updated);
   };
 
-  const handleResetStep = () => {
-    updateOrderStatus(order.id, 'confirmed');
-    const updated = getOrderById(order.id);
-    if (updated) setOrder(updated);
-  };
+  useEffect(() => {
+    fetchLiveOrder();
+    const interval = setInterval(fetchLiveOrder, 10000); // 10s poll for status changes
+    return () => clearInterval(interval);
+  }, [rawId]);
 
-  const getStatusIcon = (status: OrderStatus) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'confirmed':
         return CheckCircle2;
       case 'preparing':
         return ChefHat;
+      case 'ready':
+      case 'ready_for_pickup':
+        return Clock;
       case 'out_for_delivery':
         return Bike;
       case 'delivered':
@@ -89,6 +102,9 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
         return Clock;
     }
   };
+
+  const isDelivered = order.status === 'delivered';
+  const isPickup = order.orderType === 'pickup';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F6F1]">
@@ -109,21 +125,19 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1814]">
                 Track Order
               </h1>
-              <p className="text-xs text-[#77736C] truncate max-w-[280px]">
-                {order.id} • {order.deliveryAddress || 'Kochi Delivery'}
+              <p className="text-xs text-[#77736C]">
+                {order.id} • {order.island ? `${order.island} Island` : 'Grand View Restaurant'}
               </p>
             </div>
           </div>
 
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-              order.status === 'delivered'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-[#FBF6EE] text-[#C99A4A] border border-[#E6E1D5]'
-            }`}
+          <button
+            onClick={fetchLiveOrder}
+            className="p-2 rounded-xl bg-white border border-[#E6E1D5] text-[#77736C] hover:text-[#1A1814] transition-colors"
+            title="Refresh Status"
           >
-            {order.status.replace(/_/g, ' ')}
-          </span>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#C99A4A]' : ''}`} />
+          </button>
         </div>
 
         {/* Estimated Arrival Banner */}
@@ -131,13 +145,19 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
           <div className="flex items-center justify-between relative z-10">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#E5C07B] mb-1">
-                Estimated Arrival
+                {isDelivered ? 'Delivery Complete' : 'Estimated Time'}
               </p>
               <h2 className="font-serif text-2xl font-bold text-white">
-                {order.status === 'delivered' ? 'Delivered' : order.estimatedTime || '30–35 mins'}
+                {isDelivered ? 'Delivered' : order.estimatedTime || '30–35 mins'}
               </h2>
               <p className="text-xs text-[#D1C9BE] mt-0.5 truncate max-w-[280px]">
-                {order.deliveryAddress || 'Grand View Restaurant Delivery'}
+                {order.status === 'out_for_delivery'
+                  ? 'Delivery partner is on the way to your house'
+                  : order.status === 'preparing'
+                  ? 'Chefs are cooking your meal in the kitchen'
+                  : order.status === 'ready'
+                  ? 'Packed and ready for delivery partner'
+                  : 'Order confirmed and scheduled'}
               </p>
             </div>
 
@@ -147,14 +167,14 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
           </div>
         </div>
 
-        {/* Live Timeline Section */}
+        {/* Status Timeline */}
         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E6E1D5] shadow-xs mb-5">
           <h3 className="font-serif text-base font-bold text-[#1A1814] mb-5">
-            Order Timeline
+            Order Progress
           </h3>
 
           <div className="relative pl-6 space-y-7 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#E6E1D5]">
-            {order.timeline.map((step, idx) => {
+            {(order.timeline || []).map((step: any, idx: number) => {
               const Icon = getStatusIcon(step.status);
               const isCompleted = step.completed;
               const isCurrent = step.current;
@@ -196,103 +216,113 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
               );
             })}
           </div>
-
-          {/* Interactive Demo Simulation Controls */}
-          <div className="mt-7 pt-4 border-t border-[#E6E1D5] flex items-center justify-between bg-[#FAF8F5] p-3 rounded-xl">
-            <div>
-              <p className="text-xs font-bold text-[#1A1814]">Simulation Controls</p>
-              <p className="text-[10px] text-[#77736C]">Test next status transition</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleNextStep}
-                disabled={order.status === 'delivered'}
-                className="btn-gold py-1.5 px-3 text-xs inline-flex items-center gap-1.5 disabled:opacity-40"
-              >
-                <Play className="w-3 h-3" />
-                <span>Next</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleResetStep}
-                className="p-1.5 rounded-lg bg-white border border-[#E6E1D5] text-[#77736C] hover:text-[#1A1814]"
-                title="Reset to confirmed"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Assigned Steward Info */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E6E1D5] shadow-xs mb-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#FBF6EE] border border-[#E6E1D5] flex items-center justify-center text-[#C99A4A]">
-                <ChefHat className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-serif text-sm font-bold text-[#1A1814]">
-                  Arjun Nair
-                </h4>
-                <p className="text-[11px] text-[#77736C]">Delivery Valet • Grand View</p>
-              </div>
-            </div>
-
-            <a
-              href="tel:+919876543210"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C99A4A] text-xs font-semibold text-[#C99A4A] hover:bg-[#C99A4A] hover:text-white transition-colors"
-            >
-              <Phone className="w-3.5 h-3.5" />
-              <span>Call</span>
-            </a>
-          </div>
-        </div>
-
-        {/* Ordered Dishes Summary */}
-        {order.items && order.items.length > 0 && (
-          <div className="bg-white rounded-2xl p-5 border border-[#E6E1D5] shadow-xs">
-            <h4 className="font-serif text-sm font-bold text-[#1A1814] mb-3">
-              Items in Order
-            </h4>
-            <div className="divide-y divide-[#E6E1D5]/60 text-xs sm:text-sm">
-              {order.items.map((item, idx) => (
-                <div key={idx} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    {item.foodItem?.image && (
-                      <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 border border-[#E6E1D5]">
-                        <Image
-                          src={item.foodItem.image}
-                          alt={item.foodItem.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium text-[#1A1814]">
-                        {item.foodItem?.name || 'Dish'} × {item.quantity}
-                      </p>
-                      {item.selectedAddOns?.length > 0 && (
-                        <p className="text-[10px] text-[#77736C]">
-                          + {item.selectedAddOns.map((a) => a.name).join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <span className="font-bold text-[#1A1814]">
-                    ₹{item.itemTotal}
-                  </span>
+        {/* Assigned Delivery Partner Card */}
+        {!isPickup && (
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E6E1D5] shadow-xs mb-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#FBF6EE] border border-[#E6E1D5] flex items-center justify-center text-[#C99A4A]">
+                  <Bike className="w-5 h-5" />
                 </div>
-              ))}
-            </div>
-            <div className="border-t border-[#E6E1D5] mt-3 pt-2.5 flex justify-between font-bold text-sm text-[#1A1814]">
-              <span>Total Paid</span>
-              <span className="text-base text-[#C99A4A]">₹{order.total}</span>
+                <div>
+                  <h4 className="font-serif text-sm font-bold text-[#1A1814]">
+                    {order.deliveryPersonName || 'Grand View Delivery Partner'}
+                  </h4>
+                  <p className="text-[11px] text-[#77736C]">
+                    {order.deliveryPersonName ? 'Assigned Delivery Partner' : 'Assigning driver upon dispatch'}
+                  </p>
+                </div>
+              </div>
+
+              {order.deliveryPersonPhone && (
+                <a
+                  href={`tel:${order.deliveryPersonPhone.replace(/[^0-9+]/g, '')}`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C99A4A] text-xs font-semibold text-[#C99A4A] hover:bg-[#C99A4A] hover:text-white transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call Partner</span>
+                </a>
+              )}
             </div>
           </div>
         )}
+
+        {/* Delivery Address Details */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E6E1D5] shadow-xs mb-5 space-y-2 text-xs">
+          <div className="flex items-center gap-2 text-[#C99A4A] font-bold text-xs uppercase tracking-wider mb-1">
+            <Home className="w-4 h-4" />
+            <span>{isPickup ? 'Pickup Location' : 'Delivery Destination'}</span>
+          </div>
+
+          {isPickup ? (
+            <p className="font-medium text-[#1A1814]">
+              Front Counter Pickup at Grand View Restaurant
+            </p>
+          ) : (
+            <div className="space-y-1 text-[#1A1814]">
+              <p className="font-bold text-sm">
+                {order.houseName || order.deliveryAddress}
+              </p>
+              <p className="text-[#77736C]">
+                {order.locality && `${order.locality}, `}
+                {order.island && `${order.island} Island`}
+              </p>
+              {order.landmark && (
+                <p className="text-[#77736C]">
+                  <span className="font-semibold text-[#1A1814]">Landmark:</span> {order.landmark}
+                </p>
+              )}
+              {order.deliveryInstructions && (
+                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg mt-1 font-medium text-[11px]">
+                  Instructions: {order.deliveryInstructions}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Ordered Items Summary */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E6E1D5] shadow-xs space-y-3">
+          <h3 className="font-serif text-sm font-bold text-[#1A1814]">
+            Order Details ({order.items?.length || 0} items)
+          </h3>
+
+          <div className="divide-y divide-[#E6E1D5]/60 text-xs">
+            {order.items?.map((item: any, idx: number) => (
+              <div key={idx} className="py-2.5 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-[#1A1814]">{item.quantity}×</span>{' '}
+                  <span className="font-medium text-[#1A1814]">{item.foodItem?.name || item.name}</span>
+                  {item.selectedAddOns?.length > 0 && (
+                    <p className="text-[10px] text-[#77736C]">
+                      + {item.selectedAddOns.map((a: any) => a.name).join(', ')}
+                    </p>
+                  )}
+                </div>
+                <span className="font-semibold text-[#1A1814]">
+                  ₹{item.itemTotal || ((item.foodItem?.price || item.price) * item.quantity)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-3 border-t border-[#E6E1D5] space-y-1 text-xs text-[#77736C]">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span>₹{order.subtotal}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Delivery Fee</span>
+              <span>{order.deliveryCharge === 0 ? 'FREE' : `₹${order.deliveryCharge}`}</span>
+            </div>
+            <div className="flex justify-between text-sm font-bold text-[#1A1814] pt-1">
+              <span>Total Bill</span>
+              <span className="text-[#C99A4A]">₹{order.total}</span>
+            </div>
+          </div>
+        </div>
       </main>
 
       <Footer />

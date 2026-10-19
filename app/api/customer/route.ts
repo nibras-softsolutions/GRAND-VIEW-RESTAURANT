@@ -14,24 +14,23 @@ export async function GET() {
     if (customerRows.length === 0) {
       return NextResponse.json({
         profile: {
-          name: 'Alexander Wright',
-          phone: '+91 98765 43210',
-          email: 'alex.wright@example.com',
+          name: 'Mohammed Shafi',
+          phone: '+91 94473 45678',
+          email: 'shafi.amini@example.com',
           preferences: { vegOnly: false, spicePreference: 'medium' },
           savedAddresses: [
             {
-              id: 'addr_1',
+              id: 'addr_amini_1',
               label: 'Home',
-              address: 'Flat 4B, Marine View Heights, Waterfront Promenade, Kochi',
-              landmark: 'Near Waterfront Light House',
+              fullName: 'Mohammed Shafi',
+              phone: '+91 94473 45678',
+              island: 'Amini',
+              houseName: 'Kunnumpuram House',
+              locality: 'Near Old Juma Masjid',
+              landmark: 'Opposite BSNL Tower',
+              deliveryInstructions: 'Please call when you reach nearby.',
+              address: 'Kunnumpuram House, Near Old Juma Masjid, Amini, Lakshadweep',
               isDefault: true,
-            },
-            {
-              id: 'addr_2',
-              label: 'Work',
-              address: 'Unit 301, Infopark Tower, Kakkanad, Kochi',
-              landmark: 'Opposite Main Tech Hub Gate',
-              isDefault: false,
             },
           ],
         },
@@ -40,7 +39,11 @@ export async function GET() {
 
     const customer = customerRows[0];
     const addresses = await sql`
-      SELECT id, label, address, landmark, is_default as "isDefault" 
+      SELECT 
+        id, label, full_name as "fullName", phone,
+        island, house_name as "houseName", locality, landmark,
+        delivery_instructions as "deliveryInstructions",
+        address, is_default as "isDefault" 
       FROM customer_addresses 
       WHERE customer_id = ${customer.id} 
       ORDER BY created_at ASC;
@@ -56,7 +59,19 @@ export async function GET() {
         phone: customer.phone,
         email: customer.email,
         preferences,
-        savedAddresses: addresses,
+        savedAddresses: addresses.map((a: any) => ({
+          id: a.id,
+          label: a.label || 'Home',
+          fullName: a.fullName || customer.name,
+          phone: a.phone || customer.phone,
+          island: a.island || 'Amini',
+          houseName: a.houseName || '',
+          locality: a.locality || '',
+          landmark: a.landmark || '',
+          deliveryInstructions: a.deliveryInstructions || '',
+          address: a.address || `${a.houseName || ''}, ${a.locality || ''}, ${a.island || 'Amini'}`,
+          isDefault: Boolean(a.isDefault),
+        })),
       },
     });
   } catch (error) {
@@ -93,18 +108,26 @@ export async function POST(request: Request) {
     `;
 
     if (body.savedAddresses && body.savedAddresses.length > 0) {
-      // Clear and re-insert addresses
       await sql`DELETE FROM customer_addresses WHERE customer_id = ${customerId};`;
       for (const addr of body.savedAddresses) {
+        const fullAddrStr = addr.address || `${addr.houseName || ''}, ${addr.locality || ''}, ${addr.island || 'Amini'}`;
+
         await sql`
-          INSERT INTO customer_addresses (id, customer_id, label, address, landmark, is_default)
-          VALUES (
-            ${addr.id || `addr_${Date.now()}`},
+          INSERT INTO customer_addresses (
+            id, customer_id, label, full_name, phone, island, house_name, locality, landmark, delivery_instructions, address, is_default
+          ) VALUES (
+            ${addr.id || `addr_${Date.now()}_${Math.random().toString(36).substring(7)}`},
             ${customerId},
-            ${addr.label},
-            ${addr.address},
+            ${addr.label || 'Home'},
+            ${addr.fullName || body.name},
+            ${addr.phone || body.phone},
+            ${addr.island || 'Amini'},
+            ${addr.houseName || ''},
+            ${addr.locality || ''},
             ${addr.landmark || ''},
-            ${addr.isDefault || false}
+            ${addr.deliveryInstructions || ''},
+            ${fullAddrStr},
+            ${Boolean(addr.isDefault)}
           );
         `;
       }

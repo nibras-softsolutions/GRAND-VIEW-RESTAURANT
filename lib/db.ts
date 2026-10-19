@@ -54,15 +54,60 @@ export async function initDatabase() {
     );
   `;
 
-  // 3. Saved Delivery Addresses table
+  // 3. Saved Delivery Addresses table (Structured for local Lakshadweep addresses)
   await sql`
     CREATE TABLE IF NOT EXISTS customer_addresses (
       id VARCHAR(60) PRIMARY KEY,
       customer_id VARCHAR(60),
       label VARCHAR(50) NOT NULL DEFAULT 'Home',
-      address TEXT NOT NULL,
+      full_name VARCHAR(120),
+      phone VARCHAR(40),
+      island VARCHAR(60) NOT NULL DEFAULT 'Amini',
+      house_name VARCHAR(150) NOT NULL DEFAULT '',
+      locality VARCHAR(150) NOT NULL DEFAULT '',
       landmark VARCHAR(200),
+      delivery_instructions TEXT,
+      address TEXT NOT NULL,
       is_default BOOLEAN DEFAULT false,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // 3.1 Delivery Persons table
+  await sql`
+    CREATE TABLE IF NOT EXISTS delivery_persons (
+      id VARCHAR(60) PRIMARY KEY,
+      name VARCHAR(120) NOT NULL,
+      phone VARCHAR(40) UNIQUE NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      vehicle_info VARCHAR(100),
+      active BOOLEAN DEFAULT true,
+      last_login_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // 3.2 Delivery Sessions table
+  await sql`
+    CREATE TABLE IF NOT EXISTS delivery_sessions (
+      id VARCHAR(100) PRIMARY KEY,
+      delivery_person_id VARCHAR(60) NOT NULL REFERENCES delivery_persons(id) ON DELETE CASCADE,
+      expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // 3.3 Order Status History table
+  await sql`
+    CREATE TABLE IF NOT EXISTS order_status_history (
+      id VARCHAR(80) PRIMARY KEY,
+      order_id VARCHAR(60) NOT NULL,
+      status VARCHAR(40) NOT NULL,
+      actor_role VARCHAR(30) NOT NULL,
+      actor_name VARCHAR(120),
+      notes TEXT,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
   `;

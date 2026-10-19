@@ -15,10 +15,23 @@ export async function seedDatabaseIfEmpty() {
     await sql`
       INSERT INTO admin_users (id, name, email, password_hash, role, active)
       VALUES 
-        ('admin_super', 'Alexander Wright', 'admin@grandview.com', ${superAdminHash}, 'super_admin', true),
-        ('admin_manager', 'Meera Krishnan', 'manager@grandview.com', ${managerHash}, 'manager', true),
-        ('admin_staff', 'Rahul Verma', 'staff@grandview.com', ${staffHash}, 'staff', true)
+        ('admin_super', 'Alexander Wright', 'admin@grandview.com', ${superAdminHash}, 'admin', true),
+        ('admin_manager', 'Meera Krishnan', 'manager@grandview.com', ${managerHash}, 'admin', true),
+        ('admin_staff', 'Rahul Verma', 'staff@grandview.com', ${staffHash}, 'admin', true)
       ON CONFLICT (email) DO NOTHING;
+    `;
+  }
+
+  // 1.1 Seed default delivery persons if empty
+  const delivCount = await sql`SELECT count(*) as count FROM delivery_persons;`;
+  if (Number(delivCount[0]?.count) === 0) {
+    const deliveryHash = bcrypt.hashSync('Delivery@2026', 10);
+    await sql`
+      INSERT INTO delivery_persons (id, name, phone, password_hash, vehicle_info, active)
+      VALUES 
+        ('deliv_1', 'Rashid Ali', '+91 94471 23456', ${deliveryHash}, 'Honda Activa (LD-01-A-1234)', true),
+        ('deliv_2', 'Sayed Koya', '+91 94472 34567', ${deliveryHash}, 'Hero Splendor (LD-01-B-5678)', true)
+      ON CONFLICT (phone) DO NOTHING;
     `;
   }
 

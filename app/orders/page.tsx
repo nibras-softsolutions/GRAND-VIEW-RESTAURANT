@@ -95,7 +95,7 @@ export default function OrdersPage() {
                         </span>
                       </div>
                       <p className="text-[11px] text-[#77736C] mt-0.5 truncate max-w-[280px]">
-                        {order.createdAt} • {order.deliveryAddress || 'Kochi Delivery'}
+                        {order.createdAt} • {order.deliveryAddress || `${order.island || 'Amini'} Delivery`}
                       </p>
                     </div>
 
