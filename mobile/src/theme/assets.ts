@@ -1,0 +1,35 @@
+export const ReferenceAssets = {
+  scooterSplash: require('../../assets/extracted/scooter_splash.png'),
+  scooterLogin: require('../../assets/extracted/scooter_login.png'),
+  promoBanner: require('../../assets/extracted/promo_banner.png'),
+  userAvatar: require('../../assets/extracted/user_avatar.png'),
+  dealPizza: require('../../assets/extracted/deal_pizza.png'),
+  dealFree: require('../../assets/extracted/deal_free.png'),
+  
+  // Categories
+  catBurger: require('../../assets/extracted/cat_burger.png'),
+  catPizza: require('../../assets/extracted/cat_pizza.png'),
+  catSushi: require('../../assets/extracted/cat_sushi.png'),
+  catChicken: require('../../assets/extracted/cat_chicken.png'),
+  catMeat: require('../../assets/extracted/cat_meat.png'),
+  catNoodles: require('../../assets/extracted/cat_noodles.png'),
+  catPasta: require('../../assets/extracted/cat_pasta.png'),
+  catDessert: require('../../assets/extracted/cat_dessert.png'),
+  catDrinks: require('../../assets/extracted/cat_drinks.png'),
+
+  // Food Items
+  foodCheeseburger: require('../../assets/extracted/food_cheeseburger.png'),
+  foodCombo: require('../../assets/extracted/food_combo.png'),
+  foodPepperoni: require('../../assets/extracted/food_pepperoni.png'),
+  foodGarlicbread: require('../../assets/extracted/food_garlicbread.png'),
+  foodSushibento: require('../../assets/extracted/food_sushibento.png'),
+  foodSalmonmaki: require('../../assets/extracted/food_salmonmaki.png'),
+  foodTempura: require('../../assets/extracted/food_tempura.png'),
+  foodFriedchicken: require('../../assets/extracted/food_friedchicken.png'),
+  foodSpicybucket: require('../../assets/extracted/food_spicybucket.png'),
+  foodWrap: require('../../assets/extracted/food_wrap.png'),
+  foodRoastchicken: require('../../assets/extracted/food_roastchicken.png'),
+  foodSteak: require('../../assets/extracted/food_steak.png'),
+  foodHotdog: require('../../assets/extracted/food_hotdog.png'),
+  foodKebab: require('../../assets/extracted/food_kebab.png'),
+};

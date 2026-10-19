@@ -8,7 +8,10 @@ export function middleware(request: NextRequest) {
   const isAdminAuthenticated = Boolean(adminCookie && adminCookie.value);
 
   const deliveryCookie = request.cookies.get('gv_delivery_session');
-  const isDeliveryAuthenticated = Boolean(deliveryCookie && deliveryCookie.value);
+  const authHeader = request.headers.get('authorization');
+  const isDeliveryBearer = Boolean(authHeader && authHeader.startsWith('Bearer '));
+  const isDeliverySessionHeader = Boolean(request.headers.get('x-delivery-session'));
+  const isDeliveryAuthenticated = Boolean((deliveryCookie && deliveryCookie.value) || isDeliveryBearer || isDeliverySessionHeader);
 
   // 1. Admin UI route protection (/admin/*)
   if (pathname.startsWith('/admin')) {

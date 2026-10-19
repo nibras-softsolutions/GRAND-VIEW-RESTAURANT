@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+ezgif-89cff0e6d60071ab-jpg/
 
 # debug
 npm-debug.log*

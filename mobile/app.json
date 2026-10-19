@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Grand View Restaurant",
+    "slug": "grand-view-restaurant",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F8F6F1",
+    "primaryColor": "#C99A4A",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8F6F1"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.grandviewrestaurant.app",
+      "infoPlist": {
+        "UIRequiresFullScreen": true
+      }
+    },
+    "android": {
+      "package": "com.grandviewrestaurant.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#F8F6F1",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "permissions": []
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "restaurantName": "Grand View Restaurant",
+      "tagline": "Good Food. Great Moments.",
+      "defaultApiUrl": "https://grand-view-restaurant.vercel.app"
+    }
+  }
+}

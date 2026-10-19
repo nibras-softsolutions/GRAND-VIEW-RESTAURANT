@@ -3,11 +3,11 @@ import { getDb } from '@/lib/db';
 import { getDeliverySession, logOrderStatusTransition } from '@/lib/auth';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getDeliverySession();
+    const session = await getDeliverySession(request);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -81,7 +81,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getDeliverySession();
+    const session = await getDeliverySession(request);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

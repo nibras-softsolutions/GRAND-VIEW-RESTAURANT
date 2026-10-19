@@ -4,7 +4,7 @@ import { getDeliverySession } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
-    const session = await getDeliverySession();
+    const session = await getDeliverySession(request);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

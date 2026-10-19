@@ -183,18 +183,33 @@ export async function createDeliverySession(person: DeliveryPersonUser): Promise
 }
 
 /**
- * Retrieves and validates the current delivery session from HttpOnly cookie
+ * Retrieves and validates the current delivery session from HttpOnly cookie or Authorization header (for mobile)
  */
-export async function getDeliverySession(): Promise<DeliverySession | null> {
+export async function getDeliverySession(request?: Request): Promise<DeliverySession | null> {
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get(DELIVERY_COOKIE_NAME);
+    let sessionId: string | undefined;
 
-    if (!sessionCookie || !sessionCookie.value) {
+    // 1. Check Authorization header or x-delivery-session (Native Mobile Apps)
+    if (request) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        sessionId = authHeader.substring(7).trim();
+      } else {
+        sessionId = request.headers.get('x-delivery-session') || undefined;
+      }
+    }
+
+    // 2. Fall back to HttpOnly cookie (Web browser)
+    if (!sessionId) {
+      const cookieStore = await cookies();
+      const sessionCookie = cookieStore.get(DELIVERY_COOKIE_NAME);
+      sessionId = sessionCookie?.value;
+    }
+
+    if (!sessionId) {
       return null;
     }
 
-    const sessionId = sessionCookie.value;
     const sql = getDb();
 
     const rows = await sql`

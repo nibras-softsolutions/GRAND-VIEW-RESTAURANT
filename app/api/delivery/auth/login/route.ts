@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     // Create session & cookie
-    await createDeliverySession({
+    const sessionId = await createDeliverySession({
       id: person.id,
       name: person.name,
       phone: person.phone,
@@ -61,6 +61,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      token: sessionId,
+      sessionId,
       deliveryPerson: {
         id: person.id,
         name: person.name,
