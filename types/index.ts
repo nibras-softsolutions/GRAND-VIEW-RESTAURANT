@@ -28,6 +28,10 @@ export interface FoodItem {
   spicyLevel?: 0 | 1 | 2 | 3;
   prepTime?: string;
   calories?: number;
+  portionSize?: string;
+  dietaryTags?: string[];
+  ingredients?: string[];
+  chefNotes?: string;
   addOns?: AddOn[];
 }
 

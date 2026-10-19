@@ -89,6 +89,11 @@ export default function FoodListItem({ item }: FoodListItemProps) {
               <Star className="w-3 h-3 fill-[#C99A4A] text-[#C99A4A]" />
               <span>{item.rating}</span>
             </div>
+            {item.prepTime && (
+              <span className="hidden sm:inline-block text-[10px] text-[#77736C] bg-[#F8F6F1] px-2 py-0.5 rounded-full border border-[#E6E1D5]">
+                {item.prepTime}
+              </span>
+            )}
           </div>
 
           <button
