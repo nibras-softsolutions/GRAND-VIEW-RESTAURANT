@@ -44,21 +44,46 @@ export interface CartItem {
   itemTotal: number; // (price + addons) * quantity
 }
 
-export type OrderStatus = 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered';
+export type OrderType = 'delivery' | 'pickup';
+export type PaymentMethod = 'cash-on-delivery' | 'online-payment' | 'pay-at-pickup' | 'pay-at-hotel' | 'add-to-room';
+export type OrderStatus = 'confirmed' | 'preparing' | 'out_for_delivery' | 'ready_for_pickup' | 'delivered';
+
+export interface SavedAddress {
+  id: string;
+  label: 'Home' | 'Work' | 'Other';
+  address: string;
+  landmark?: string;
+  isDefault?: boolean;
+}
+
+export interface CustomerProfile {
+  name: string;
+  phone: string;
+  email: string;
+  savedAddresses: SavedAddress[];
+  preferences: {
+    vegOnly: boolean;
+    spicePreference: 'mild' | 'medium' | 'spicy';
+  };
+}
 
 export interface Order {
-  id: string; // e.g. #GH20261016
+  id: string; // e.g. #GV20261019
   createdAt: string;
   items: CartItem[];
   subtotal: number;
   deliveryCharge: number;
   tax: number;
   total: number;
-  roomNumber: string;
-  guestName: string;
+  orderType: OrderType;
+  deliveryAddress: string;
+  landmark?: string;
+  customerName: string;
+  guestName?: string; // backward compatibility
+  roomNumber?: string; // backward compatibility
   phone: string;
-  paymentMethod: 'pay-at-hotel' | 'add-to-room';
-  paymentSubOption?: 'cash' | 'card';
+  paymentMethod: PaymentMethod;
+  paymentSubOption?: 'cash' | 'card' | 'upi';
   status: OrderStatus;
   estimatedTime: string;
   timeline: {
@@ -70,3 +95,4 @@ export interface Order {
     current?: boolean;
   }[];
 }
+

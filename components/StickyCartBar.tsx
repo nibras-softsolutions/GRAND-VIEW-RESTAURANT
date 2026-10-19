@@ -33,7 +33,7 @@ export default function StickyCartBar() {
                 {totalCount} {totalCount === 1 ? 'item' : 'items'} in cart
               </p>
               <p className="text-[11px] text-[#D8B46A]">
-                ₹{total} • Free Room Delivery
+                ₹{total} • Fast Delivery & Pickup
               </p>
             </div>
           </div>

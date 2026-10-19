@@ -8,10 +8,11 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { useCart } from '@/context/CartContext';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ArrowLeft, BedDouble } from 'lucide-react';
+import { CartItem, AddOn } from '@/types';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, subtotal, deliveryCharge, total, guestInfo, setIsRoomModalOpen } = useCart();
+  const { cart, updateQuantity, removeFromCart, subtotal, deliveryCharge, total } = useCart();
   const router = useRouter();
 
   return (
@@ -34,14 +35,10 @@ export default function CartPage() {
             </h1>
           </div>
 
-          {/* Delivery target room badge */}
-          <button
-            onClick={() => setIsRoomModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E6E1D5] text-xs font-semibold text-[#1A1814] hover:border-[#C99A4A]"
-          >
-            <BedDouble className="w-3.5 h-3.5 text-[#C99A4A]" />
-            <span>Room {guestInfo.roomNumber}</span>
-          </button>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#E6E1D5] text-xs font-semibold text-[#1A1814]">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Fast Doorstep Delivery</span>
+          </div>
         </div>
 
         {cart.length === 0 ? (
@@ -53,7 +50,7 @@ export default function CartPage() {
               Your cart is empty
             </h2>
             <p className="text-xs text-[#77736C] mb-6 max-w-xs mx-auto">
-              Add something delicious from our hotel menu to enjoy in your room.
+              Add something delicious from our restaurant menu for fast home delivery or takeaway.
             </p>
             <Link
               href="/menu"
@@ -66,7 +63,7 @@ export default function CartPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Items List matching Screen 5 */}
             <div className="lg:col-span-7 bg-white rounded-2xl p-5 border border-[#E6E1D5] shadow-xs divide-y divide-[#E6E1D5]/70">
-              {cart.map((item) => (
+              {cart.map((item: CartItem) => (
                 <div key={item.cartItemId} className="py-3.5 first:pt-0 last:pb-0 flex items-center gap-3.5">
                   {/* Food Image */}
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-[#1D1B18] shrink-0 border border-[#E6E1D5]">
@@ -87,7 +84,7 @@ export default function CartPage() {
 
                     {item.selectedAddOns.length > 0 && (
                       <p className="text-[11px] text-[#77736C] truncate mt-0.5">
-                        + {item.selectedAddOns.map((a) => a.name).join(', ')}
+                        + {item.selectedAddOns.map((a: AddOn) => a.name).join(', ')}
                       </p>
                     )}
 

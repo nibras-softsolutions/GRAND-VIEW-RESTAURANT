@@ -7,19 +7,22 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { useOrders } from '@/context/OrderContext';
-import { Check, Clock, BedDouble, ArrowRight, UtensilsCrossed } from 'lucide-react';
+import { Check, Clock, MapPin, ArrowRight, UtensilsCrossed, Store } from 'lucide-react';
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get('id') || '#GH20261016';
+  const orderId = searchParams.get('id') || '#GV20261019';
   const { getOrderById, currentOrder } = useOrders();
 
   const order = getOrderById(orderId) || currentOrder || {
     id: orderId,
-    estimatedTime: '20–25 mins',
-    roomNumber: 'Room 302',
-    total: 460,
+    estimatedTime: '30–35 mins',
+    deliveryAddress: 'Flat 4B, Marine View Heights, Kochi',
+    orderType: 'delivery',
+    total: 490,
   };
+
+  const isPickup = order.orderType === 'pickup';
 
   return (
     <main className="flex-1 max-w-md mx-auto w-full px-4 py-8 pb-28 md:pb-16 flex flex-col items-center text-center">
@@ -32,7 +35,7 @@ function OrderSuccessContent() {
         Order Placed!
       </h1>
       <p className="text-xs sm:text-sm text-[#77736C] mb-6">
-        Your delicious food is on the way.
+        Thank you for ordering from Grand View Restaurant.
       </p>
 
       {/* Order Info Card matching Screen 7 */}
@@ -50,17 +53,21 @@ function OrderSuccessContent() {
             <span>Estimated Time</span>
           </div>
           <span className="text-xs sm:text-sm font-semibold text-[#1A1814]">
-            {order.estimatedTime || '20–25 mins'}
+            {order.estimatedTime || (isPickup ? '15–20 mins' : '30–35 mins')}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-[#77736C]">
-            <BedDouble className="w-4 h-4 text-[#C99A4A]" />
-            <span>Delivery To</span>
+            {isPickup ? (
+              <Store className="w-4 h-4 text-[#C99A4A]" />
+            ) : (
+              <MapPin className="w-4 h-4 text-[#C99A4A]" />
+            )}
+            <span>{isPickup ? 'Pickup At' : 'Delivery To'}</span>
           </div>
-          <span className="text-xs sm:text-sm font-semibold text-[#1A1814]">
-            {order.roomNumber}
+          <span className="text-xs sm:text-sm font-semibold text-[#1A1814] max-w-[200px] truncate text-right">
+            {order.deliveryAddress || 'Your delivery address'}
           </span>
         </div>
       </div>
@@ -69,7 +76,7 @@ function OrderSuccessContent() {
       <div className="w-full space-y-2.5">
         <Link
           href={`/order/${encodeURIComponent(order.id.replace('#', ''))}`}
-          className="w-full btn-gold py-3.5 px-6 text-sm font-semibold flex items-center justify-center gap-2"
+          className="w-full btn-gold py-3.5 px-6 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-md"
         >
           <span>Track Order</span>
           <ArrowRight className="w-4 h-4" />
@@ -77,14 +84,14 @@ function OrderSuccessContent() {
 
         <Link
           href="/menu"
-          className="w-full py-2.5 px-6 rounded-full border border-[#E6E1D5] hover:border-[#C99A4A]/60 text-xs font-semibold text-[#77736C] hover:text-[#1A1814] flex items-center justify-center gap-2 transition-colors"
+          className="w-full py-2.5 px-6 rounded-full border border-[#E6E1D5] hover:border-[#C99A4A]/60 text-xs font-semibold text-[#77736C] hover:text-[#1A1814] flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
           <UtensilsCrossed className="w-3.5 h-3.5" />
           <span>Back to Menu</span>
         </Link>
       </div>
 
-      {/* Hotel Thank You Cloche matching Screen 7 */}
+      {/* Restaurant Thank You Cloche matching Screen 7 */}
       <div className="mt-10 flex flex-col items-center">
         <div className="w-12 h-12 rounded-full bg-[#FAF8F5] border border-[#E6E1D5] flex items-center justify-center text-[#C99A4A] mb-2">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -94,7 +101,7 @@ function OrderSuccessContent() {
           </svg>
         </div>
         <p className="font-serif text-xs sm:text-sm font-bold text-[#1A1814]">
-          Thank you for choosing Grand View Hotel
+          Thank you for choosing Grand View Restaurant
         </p>
 
         {/* Small golden lotus mark */}

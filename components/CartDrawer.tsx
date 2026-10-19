@@ -78,7 +78,7 @@ export default function CartDrawer() {
                 Your cart is empty
               </h3>
               <p className="text-xs text-[#77736C] max-w-xs mb-5">
-                Add dishes from our menu to enjoy in your room.
+                Add dishes from our menu for fast doorstep delivery or takeaway.
               </p>
               <button
                 onClick={() => {

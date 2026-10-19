@@ -32,10 +32,10 @@ export default function MobileSplashHero({ onDismiss }: MobileSplashHeroProps) {
       <div className="relative z-10 text-center space-y-4 my-auto py-8">
         <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
           Good Food <br />
-          Makes a Great Stay
+          Great Moments
         </h1>
         <p className="text-xs sm:text-sm text-[#D1C9BE] max-w-xs mx-auto leading-relaxed">
-          Order your favourite meals, anytime from the comfort of your room.
+          Order signature culinary dishes fresh to your doorstep or takeaway counter.
         </p>
 
         {/* Buttons */}
@@ -70,14 +70,14 @@ export default function MobileSplashHero({ onDismiss }: MobileSplashHeroProps) {
           <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[#D8B46A] mb-1">
             <Clock className="w-4 h-4" />
           </div>
-          <span className="text-[10px] font-medium text-white/90">Fast Delivery</span>
+          <span className="text-[10px] font-medium text-white/90">30 Min Delivery</span>
         </div>
 
         <div className="flex flex-col items-center">
           <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[#D8B46A] mb-1">
-            <BedDouble className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" />
           </div>
-          <span className="text-[10px] font-medium text-white/90">In-Room Dining</span>
+          <span className="text-[10px] font-medium text-white/90">Doorstep Delivery</span>
         </div>
       </div>
     </div>

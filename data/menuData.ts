@@ -30,7 +30,7 @@ export const MENU_ITEMS: FoodItem[] = [
     portionSize: 'Serves 1-2 • 420g',
     dietaryTags: ["Chef's Signature", 'Contains Dairy', 'Halal'],
     ingredients: ['Tender Chicken Thighs', 'San Marzano Tomatoes', 'Amul Churned Butter', 'Cashew Paste', 'Kasturi Methi'],
-    chefNotes: 'Our most requested in-room dining dish. Slow-simmered for 4 hours according to Executive Chef signature recipe.',
+    chefNotes: 'Our most requested restaurant signature dish. Slow-simmered for 4 hours according to Executive Chef secret recipe.',
     addOns: [
       { id: 'naan-1', name: 'Butter Garlic Naan', price: 40 },
       { id: 'rice-1', name: 'Fragrant Basmati Rice', price: 30 },
@@ -601,7 +601,7 @@ export const MENU_ITEMS: FoodItem[] = [
     portionSize: 'Full Sandwich with Fries • 440g',
     dietaryTags: ['Comfort Classic', 'High Protein'],
     ingredients: ['Artisan Sourdough', 'Smoked Chicken', 'Free-Range Egg', 'Sharp Cheddar', 'Crisp Romaine'],
-    chefNotes: 'The quintessential hotel room-service indulgence, cut into 4 quarters.',
+    chefNotes: 'The quintessential gourmet club indulgence, served with seasoned golden fries and house dip.',
     addOns: [
       { id: 'cheese-slice', name: 'Extra Aged Cheddar Slice', price: 30 },
       { id: 'extra-fries', name: 'Upgrade to Truffle Herb Fries', price: 45 },
@@ -650,7 +650,7 @@ export const MENU_ITEMS: FoodItem[] = [
     portionSize: 'Basket • 220g',
     dietaryTags: ['Vegetarian', 'Crispy Snack'],
     ingredients: ['Idaho Russet Potatoes', 'Truffle Salt', 'Cold Pressed Groundnut Oil', 'Fresh Thyme'],
-    chefNotes: 'Double-fried for maximum crispness that holds temperature to room delivery.',
+    chefNotes: 'Double-fried for maximum crispness that holds temperature for fast doorstep delivery.',
     addOns: [
       { id: 'melted-cheese', name: 'Warm Sharp Cheddar Cheese Dip', price: 35 },
       { id: 'peri-peri', name: 'Extra Peri Peri Spicy Dusting', price: 15 },
@@ -658,25 +658,44 @@ export const MENU_ITEMS: FoodItem[] = [
   },
 ];
 
-export const HOTEL_INFO = {
-  name: 'Grand View Hotel',
-  tagline: 'Good Food. Better Stays.',
-  location: 'Grand View Hotel, Kochi',
+export const RESTAURANT_INFO = {
+  name: 'Grand View Restaurant',
+  tagline: 'Good Food. Great Moments.',
+  supporting: 'Fresh ingredients. Authentic flavours. Exceptional taste.',
+  location: 'Marine Promenade, Waterfront Drive, Kochi',
   address: 'Marine Promenade, Waterfront Drive, Kochi, Kerala 682001',
   phone: '+91 98765 43210',
-  email: 'dining@grandviewhotel.com',
-  inRoomDiningHours: '24 Hours Available',
-  defaultGuest: {
+  email: 'orders@grandviewrestaurant.com',
+  openingHours: '11:00 AM – 11:30 PM (Daily)',
+  deliveryTime: '30–35 mins',
+  pickupTime: '15–20 mins',
+  deliveryFee: 40,
+  freeDeliveryThreshold: 500,
+  defaultCustomer: {
     name: 'Alexander Wright',
-    roomNumber: '302',
     phone: '+91 98765 43210',
+    email: 'alex.wright@example.com',
+    deliveryAddress: 'Flat 4B, Marine View Heights, Waterfront Promenade, Kochi',
+    landmark: 'Near Waterfront Light House',
   },
-  availableRooms: [
-    'Room 104 (Deluxe Suite)',
-    'Room 208 (Bay View Room)',
-    'Room 302 (Executive Premier)',
-    'Room 415 (Presidential Suite)',
-    'Room 501 (Terrace Penthouse)',
-    'Room 612 (Grand Club Suite)',
+  savedAddresses: [
+    {
+      id: 'addr-1',
+      label: 'Home' as const,
+      address: 'Flat 4B, Marine View Heights, Waterfront Promenade, Kochi',
+      landmark: 'Near Waterfront Light House',
+      isDefault: true,
+    },
+    {
+      id: 'addr-2',
+      label: 'Work' as const,
+      address: 'Suite 302, Business Bay Tower, MG Road, Kochi',
+      landmark: 'Opposite Central Metro Station',
+      isDefault: false,
+    },
   ],
 };
+
+// Aliased for backward compatibility
+export const HOTEL_INFO = RESTAURANT_INFO;
+

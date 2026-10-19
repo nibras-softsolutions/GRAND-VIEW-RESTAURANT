@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FoodItem, AddOn, CartItem } from '@/types';
-import { HOTEL_INFO } from '@/data/menuData';
 
 interface ToastMessage {
   id: string;
@@ -10,10 +9,13 @@ interface ToastMessage {
   text: string;
 }
 
-interface GuestInfo {
+interface CustomerInfo {
   name: string;
-  roomNumber: string;
   phone: string;
+  email: string;
+  deliveryAddress: string;
+  landmark?: string;
+  roomNumber?: string; // backward compatibility
 }
 
 interface CartContextType {
@@ -35,8 +37,10 @@ interface CartContextType {
   isFoodDetailOpen: boolean;
   toasts: ToastMessage[];
   showToast: (text: string, type?: 'success' | 'info' | 'error') => void;
-  guestInfo: GuestInfo;
-  updateGuestInfo: (info: Partial<GuestInfo>) => void;
+  customerInfo: CustomerInfo;
+  updateCustomerInfo: (info: Partial<CustomerInfo>) => void;
+  guestInfo: CustomerInfo; // backward compatibility
+  updateGuestInfo: (info: Partial<CustomerInfo>) => void; // backward compatibility
   isRoomModalOpen: boolean;
   setIsRoomModalOpen: (open: boolean) => void;
 }
@@ -51,7 +55,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isFoodDetailOpen, setIsFoodDetailOpen] = useState(false);
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [guestInfo, setGuestInfo] = useState<GuestInfo>(HOTEL_INFO.defaultGuest);
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
+    name: 'Alexander Wright',
+    phone: '+91 98765 43210',
+    email: 'alex.wright@example.com',
+    deliveryAddress: 'Flat 4B, Marine View Heights, Waterfront Promenade, Kochi',
+    landmark: 'Near Waterfront Light House',
+    roomNumber: '302',
+  });
 
   // Load from localStorage on client mount
   useEffect(() => {
@@ -60,9 +71,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (savedCart) {
         setCart(JSON.parse(savedCart));
       }
-      const savedGuest = localStorage.getItem('gvh_guest');
-      if (savedGuest) {
-        setGuestInfo(JSON.parse(savedGuest));
+      const savedCustomer = localStorage.getItem('gvh_customer') || localStorage.getItem('gvh_guest');
+      if (savedCustomer) {
+        setCustomerInfo(JSON.parse(savedCustomer));
       }
     } catch (e) {
       console.error('Failed to load storage', e);
@@ -81,16 +92,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cart, isLoaded]);
 
-  // Save guest info to localStorage
+  // Save customer info to localStorage
   useEffect(() => {
     if (isLoaded) {
       try {
-        localStorage.setItem('gvh_guest', JSON.stringify(guestInfo));
+        localStorage.setItem('gvh_customer', JSON.stringify(customerInfo));
       } catch (e) {
-        console.error('Failed to save guest', e);
+        console.error('Failed to save customer', e);
       }
     }
-  }, [guestInfo, isLoaded]);
+  }, [customerInfo, isLoaded]);
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = Date.now().toString() + Math.random().toString().slice(2, 5);
@@ -98,10 +109,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 3200);
-  };
-
-  const updateGuestInfo = (info: Partial<GuestInfo>) => {
-    setGuestInfo((prev) => ({ ...prev, ...info }));
   };
 
   const openFoodDetail = (item: FoodItem) => {
@@ -177,6 +184,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const updateCustomerInfo = (info: Partial<CustomerInfo>) => {
+    setCustomerInfo((prev) => ({ ...prev, ...info }));
+  };
+
+  const updateGuestInfo = updateCustomerInfo;
+
   const removeFromCart = (cartItemId: string) => {
     const item = cart.find((c) => c.cartItemId === cartItemId);
     setCart((prev) => prev.filter((c) => c.cartItemId !== cartItemId));
@@ -191,8 +204,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.itemTotal, 0);
-  const deliveryCharge = 0; // Free in-room dining
-  const tax = 0;
+  const deliveryCharge = subtotal >= 500 || subtotal === 0 ? 0 : 40;
+  const tax = Math.round(subtotal * 0.05); // 5% restaurant GST
   const total = subtotal + deliveryCharge + tax;
 
   return (
@@ -216,7 +229,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isFoodDetailOpen,
         toasts,
         showToast,
-        guestInfo,
+        customerInfo,
+        updateCustomerInfo,
+        guestInfo: customerInfo,
         updateGuestInfo,
         isRoomModalOpen,
         setIsRoomModalOpen,

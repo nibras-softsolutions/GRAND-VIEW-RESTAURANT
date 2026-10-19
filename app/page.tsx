@@ -154,7 +154,7 @@ export default function HomePage() {
                   Nothing delicious found
                 </h3>
                 <p className="text-xs sm:text-sm text-[#77736C] mb-6">
-                  Try another search keyword or browse all our hotel dining categories.
+                  Try another search keyword or browse all our restaurant categories.
                 </p>
                 <button
                   onClick={() => {
@@ -185,20 +185,20 @@ export default function HomePage() {
           <div className="p-6 sm:p-8 rounded-3xl bg-[#25221E] text-white flex flex-col sm:flex-row items-center justify-between gap-4 border border-[#B98A3E]/30">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-[#D8B46A] mb-1">
-                24/7 Room Service
+                Fresh & Fast Delivery
               </p>
               <h3 className="font-serif text-xl sm:text-2xl font-bold">
-                Craving late-night dessert or snacks?
+                Craving signature curries, biryanis or desserts?
               </h3>
               <p className="text-xs sm:text-sm text-[#D1C9BE] mt-1">
-                Our kitchen is prepared around the clock with fast room delivery.
+                Order online for swift doorstep delivery across Kochi or takeaway from our kitchen.
               </p>
             </div>
             <Link
               href="/menu"
               className="py-3 px-6 rounded-xl bg-[#B98A3E] hover:bg-[#A3772F] text-white text-xs font-semibold uppercase tracking-wider flex items-center gap-2 shrink-0 transition-colors shadow-md"
             >
-              <span>Explore All Dishes</span>
+              <span>Explore Full Menu</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

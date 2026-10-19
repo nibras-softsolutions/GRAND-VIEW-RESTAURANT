@@ -40,17 +40,18 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
       deliveryCharge: 0,
       tax: 0,
       total: 460,
-      roomNumber: 'Room 302',
+      orderType: 'delivery' as const,
+      deliveryAddress: 'Suite 4B, Marine Promenade, Kochi',
       guestName: 'Alexander Wright',
       phone: '+91 98765 43210',
-      paymentMethod: 'pay-at-hotel' as const,
+      paymentMethod: 'cash-on-delivery' as const,
       status: 'preparing' as OrderStatus,
-      estimatedTime: '15–20 mins',
+      estimatedTime: '25–30 mins',
       timeline: [
         { status: 'confirmed' as OrderStatus, title: 'Order Confirmed', description: 'Received by kitchen.', completed: true, time: '8:42 PM' },
         { status: 'preparing' as OrderStatus, title: 'Preparing in Kitchen', description: 'Chefs are cooking your meal fresh.', completed: true, current: true },
-        { status: 'out_for_delivery' as OrderStatus, title: 'Out for Delivery', description: 'En route to your hotel room.', completed: false },
-        { status: 'delivered' as OrderStatus, title: 'Delivered', description: 'Enjoy your in-room dining.', completed: false },
+        { status: 'out_for_delivery' as OrderStatus, title: 'Out for Delivery', description: 'Valet en route to your delivery address.', completed: false },
+        { status: 'delivered' as OrderStatus, title: 'Delivered', description: 'Delivered hot to your door.', completed: false },
       ],
     };
   });
@@ -108,8 +109,8 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1814]">
                 Track Order
               </h1>
-              <p className="text-xs text-[#77736C]">
-                {order.id} • {order.roomNumber}
+              <p className="text-xs text-[#77736C] truncate max-w-[280px]">
+                {order.id} • {order.deliveryAddress || 'Kochi Delivery'}
               </p>
             </div>
           </div>
@@ -133,10 +134,10 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
                 Estimated Arrival
               </p>
               <h2 className="font-serif text-2xl font-bold text-white">
-                {order.status === 'delivered' ? 'Delivered' : order.estimatedTime}
+                {order.status === 'delivered' ? 'Delivered' : order.estimatedTime || '30–35 mins'}
               </h2>
-              <p className="text-xs text-[#D1C9BE] mt-0.5">
-                Delivering to {order.roomNumber} • Grand View Hotel
+              <p className="text-xs text-[#D1C9BE] mt-0.5 truncate max-w-[280px]">
+                {order.deliveryAddress || 'Grand View Restaurant Delivery'}
               </p>
             </div>
 
@@ -235,7 +236,7 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
                 <h4 className="font-serif text-sm font-bold text-[#1A1814]">
                   Arjun Nair
                 </h4>
-                <p className="text-[11px] text-[#77736C]">Room Service Steward</p>
+                <p className="text-[11px] text-[#77736C]">Delivery Valet • Grand View</p>
               </div>
             </div>
 

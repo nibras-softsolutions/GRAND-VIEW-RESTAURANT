@@ -13,7 +13,7 @@ export default function Footer() {
           <div className="space-y-3 flex flex-col items-center md:items-start">
             <HotelLogo variant="light" size="md" showTagline />
             <p className="text-xs text-[#D1C9BE] max-w-sm leading-relaxed">
-              Exquisite 24-hour in-room dining crafted with farm-fresh ingredients and delivered in private luxury.
+              Exquisite culinary dishes crafted with farm-fresh ingredients, authentic spices, and delivered hot to your doorstep.
             </p>
           </div>
 
@@ -29,12 +29,12 @@ export default function Footer() {
 
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-[#B98A3E]" />
-              <span>Grand View Hotel, Kochi</span>
+              <span>Marine Promenade, Kochi</span>
             </div>
 
             <div className="flex items-center gap-2">
               <Headphones className="w-4 h-4 text-[#B98A3E]" />
-              <span>24/7 Room Service</span>
+              <span>11:00 AM – 11:30 PM</span>
             </div>
           </div>
 
@@ -42,7 +42,7 @@ export default function Footer() {
           <div className="flex items-center gap-4">
             <a
               href="#instagram"
-              aria-label="Grand View Hotel on Instagram"
+              aria-label="Grand View Restaurant on Instagram"
               className="w-9 h-9 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-[#D8B46A] hover:bg-[#B98A3E] hover:text-white transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@ export default function Footer() {
             </a>
             <a
               href="#facebook"
-              aria-label="Grand View Hotel on Facebook"
+              aria-label="Grand View Restaurant on Facebook"
               className="w-9 h-9 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-[#D8B46A] hover:bg-[#B98A3E] hover:text-white transition-all"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@ export default function Footer() {
             </a>
             <a
               href="#youtube"
-              aria-label="Grand View Hotel on YouTube"
+              aria-label="Grand View Restaurant on YouTube"
               className="w-9 h-9 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-[#D8B46A] hover:bg-[#B98A3E] hover:text-white transition-all"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -74,11 +74,11 @@ export default function Footer() {
 
         {/* Bottom copyright */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-[#77736C]">
-          <p>© {new Date().getFullYear()} Grand View Hotel. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Grand View Restaurant. All rights reserved.</p>
           <div className="flex gap-4">
-            <Link href="/menu" className="hover:text-[#D8B46A]">Dining Menu</Link>
+            <Link href="/menu" className="hover:text-[#D8B46A]">Menu</Link>
             <Link href="/orders" className="hover:text-[#D8B46A]">Track Order</Link>
-            <Link href="/profile" className="hover:text-[#D8B46A]">Guest Services</Link>
+            <Link href="/profile" className="hover:text-[#D8B46A]">My Profile</Link>
           </div>
         </div>
       </div>

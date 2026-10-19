@@ -23,7 +23,7 @@ export default function HotelLogo({
     <Link
       href="/"
       className={`inline-flex flex-col items-center select-none group transition-opacity hover:opacity-90 ${className}`}
-      aria-label="Grand View Hotel Home"
+      aria-label="Grand View Restaurant Home"
     >
       <div className="flex items-center gap-2">
         {/* Luxury Lotus / Crown Emblem */}
@@ -74,7 +74,7 @@ export default function HotelLogo({
               isLight ? 'text-[#E5C07B]' : 'text-[#C99A4A]'
             }`}
           >
-            Hotel
+            Restaurant
           </span>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function HotelLogo({
             isLight ? 'text-[#E5C07B]/90' : 'text-[#77736C]'
           }`}
         >
-          Good Food. Better Stays.
+          Good Food. Great Moments.
         </span>
       )}
     </Link>

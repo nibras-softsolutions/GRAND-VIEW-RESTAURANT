@@ -26,51 +26,49 @@ export default function Hero() {
           <div className="grid grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Column: Typography & CTAs matching reference */}
             <div className="col-span-6 lg:col-span-7 space-y-5 text-left">
-              <span className="eyebrow block">
-                IN-ROOM DINING
+              <span className="eyebrow block tracking-[0.2em] text-[#E5C07B]">
+                AUTHENTIC FINE DINING & FAST DELIVERY
               </span>
 
               <h1 className="font-serif text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-white leading-[1.12]">
-                Gourmet Food,<br />
-                Right to Your Room
+                Good Food,<br />
+                Great Moments.
               </h1>
 
               <p className="text-sm lg:text-[15px] text-[#D1C9BE] max-w-lg leading-relaxed font-normal">
-                Fresh ingredients. Authentic flavours. Exceptional experience.
-                Delivered directly to your hotel room.
+                Fresh ingredients. Authentic flavours. Exceptional taste. Handcrafted by our master chefs and delivered fresh to your doorstep.
               </p>
 
               <div className="flex items-center gap-4 pt-3">
                 <Link
                   href="/menu"
-                  className="btn-gold py-3.5 px-8 text-sm font-semibold inline-flex items-center gap-2"
+                  className="btn-gold py-3.5 px-8 text-sm font-semibold inline-flex items-center gap-2 cursor-pointer"
                 >
                   <span>Order Now</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
-                <button
-                  type="button"
-                  onClick={() => openFoodDetail(featuredDish)}
-                  className="btn-outline-light py-3 px-6 text-sm font-medium inline-flex items-center gap-2"
+                <Link
+                  href="/menu"
+                  className="btn-outline-light py-3 px-6 text-sm font-medium inline-flex items-center gap-2 cursor-pointer"
                 >
-                  <span>Chef&apos;s Recommendation</span>
-                </button>
+                  <span>View Full Menu</span>
+                </Link>
               </div>
 
               {/* Quick Trust Badges */}
               <div className="pt-6 border-t border-white/10 grid grid-cols-3 gap-4 text-xs text-[#D1C9BE]">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#C99A4A]" />
-                  <span>20–25 Mins</span>
+                  <span>30–35 Mins</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ChefHat className="w-4 h-4 text-[#C99A4A]" />
-                  <span>Hotel Chefs</span>
+                  <span>Master Chefs</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-[#C99A4A]" />
-                  <span>Free Room Delivery</span>
+                  <span>Doorstep Delivery</span>
                 </div>
               </div>
             </div>
@@ -80,7 +78,7 @@ export default function Hero() {
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border border-[#C99A4A]/30 group">
                 <Image
                   src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80"
-                  alt="Grand View In-Room Dining Experience"
+                  alt="Grand View Gourmet Dining Experience"
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 1280px) 50vw, 600px"
@@ -134,7 +132,7 @@ export default function Hero() {
             {/* Left Content */}
             <div className="col-span-7 space-y-1.5 z-10 text-left">
               <span className="eyebrow block text-[9px] text-[#E5C07B]">
-                IN-ROOM DINING
+                CHEF&apos;S SPECIAL
               </span>
               <h2 className="font-serif text-lg font-bold leading-tight text-white">
                 {featuredDish.name}
@@ -146,7 +144,7 @@ export default function Hero() {
                 <button
                   type="button"
                   onClick={() => openFoodDetail(featuredDish)}
-                  className="btn-gold py-1.5 px-4 text-[11px] font-semibold inline-flex items-center gap-1.5"
+                  className="btn-gold py-1.5 px-4 text-[11px] font-semibold inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>Order Now</span>
                   <ArrowRight className="w-3 h-3" />

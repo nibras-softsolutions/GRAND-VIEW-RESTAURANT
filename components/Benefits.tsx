@@ -1,32 +1,32 @@
 import React from 'react';
-import { Sparkles, Clock, BedDouble, ChefHat } from 'lucide-react';
+import { Sparkles, Clock, UtensilsCrossed, ChefHat } from 'lucide-react';
 
 export default function Benefits() {
   const benefits = [
     {
       icon: Sparkles,
       title: 'Fresh Ingredients',
-      description: 'Prepared fresh by our kitchen daily.',
+      description: 'Sourced daily from premium local growers.',
     },
     {
       icon: Clock,
       title: 'Fast Delivery',
-      description: 'Delivered hot to your room in 20-25 mins.',
-    },
-    {
-      icon: BedDouble,
-      title: 'In-Room Dining',
-      description: 'Enjoy meals in private luxury.',
+      description: 'Delivered hot to your door in 30-35 mins.',
     },
     {
       icon: ChefHat,
-      title: 'Hotel Quality',
-      description: 'Crafted by our certified master chefs.',
+      title: 'Master Chefs',
+      description: 'Crafted with authentic artisanal recipes.',
+    },
+    {
+      icon: UtensilsCrossed,
+      title: 'Eco-Safe Packaging',
+      description: 'Insulated hot packaging to preserve taste.',
     },
   ];
 
   return (
-    <section className="py-5 sm:py-7 border-b border-[#E6E1D5] bg-white" aria-label="Hotel Dining Benefits">
+    <section className="py-5 sm:py-7 border-b border-[#E6E1D5] bg-white" aria-label="Restaurant Dining & Delivery Benefits">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
           {benefits.map((benefit, index) => {

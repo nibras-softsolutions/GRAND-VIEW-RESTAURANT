@@ -43,7 +43,7 @@ export default function OrdersPage() {
               My Orders
             </h1>
             <p className="text-xs text-[#77736C]">
-              In-room dining history for Room 302
+              Your online food orders & delivery history
             </p>
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function OrdersPage() {
               No orders placed yet
             </h2>
             <p className="text-xs text-[#77736C] mb-5">
-              Browse our hotel dining menu and place your first in-room meal.
+              Browse our restaurant menu and order your favourite meal.
             </p>
             <Link
               href="/menu"
@@ -94,8 +94,8 @@ export default function OrdersPage() {
                           {order.status.replace(/_/g, ' ')}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#77736C] mt-0.5">
-                        {order.createdAt} • {order.roomNumber}
+                      <p className="text-[11px] text-[#77736C] mt-0.5 truncate max-w-[280px]">
+                        {order.createdAt} • {order.deliveryAddress || 'Kochi Delivery'}
                       </p>
                     </div>
 

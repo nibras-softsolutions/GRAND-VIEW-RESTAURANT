@@ -12,7 +12,6 @@ import {
   Search,
   X,
   Phone,
-  BedDouble,
   Clock,
   Sparkles,
   UtensilsCrossed,
@@ -25,7 +24,7 @@ interface HeaderProps {
 
 export default function Header({ onSearchClick, transparentHero = false }: HeaderProps) {
   const pathname = usePathname();
-  const { totalCount, setIsCartDrawerOpen, guestInfo, setIsRoomModalOpen } = useCart();
+  const { totalCount, setIsCartDrawerOpen } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -95,18 +94,11 @@ export default function Header({ onSearchClick, transparentHero = false }: Heade
 
           {/* Right Controls */}
           <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Room delivery badge (desktop) */}
-            <button
-              onClick={() => setIsRoomModalOpen(true)}
-              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border border-[#E6E1D5] bg-[#FBF6EE] text-[#1A1814] hover:border-[#C99A4A] transition-colors"
-              title="Click to change room"
-            >
-              <BedDouble className="w-3.5 h-3.5 text-[#C99A4A]" />
-              <span>Room {guestInfo.roomNumber}</span>
-              <span className="text-[10px] text-[#C99A4A] font-bold uppercase tracking-wider">
-                Change
-              </span>
-            </button>
+            {/* Delivery status badge (desktop) */}
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border border-[#E6E1D5] bg-[#FBF6EE] text-[#1A1814]">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Delivery: 30–35 mins</span>
+            </div>
 
             {/* Search shortcut */}
             <Link
@@ -164,29 +156,18 @@ export default function Header({ onSearchClick, transparentHero = false }: Heade
               </button>
             </div>
 
-            {/* Guest In-Room Status */}
+            {/* Restaurant Dining & Delivery Status */}
             <div className="p-4 mx-4 my-4 bg-[#FBF6EE] rounded-2xl border border-[#E6E1D5]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[#C99A4A]/15 flex items-center justify-center text-[#C99A4A]">
-                    <BedDouble className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#1A1814]">
-                      Room {guestInfo.roomNumber}
-                    </p>
-                    <p className="text-[10px] text-[#77736C]">In-Room Dining</p>
-                  </div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#C99A4A]/15 flex items-center justify-center text-[#C99A4A]">
+                  <UtensilsCrossed className="w-4 h-4" />
                 </div>
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    setIsRoomModalOpen(true);
-                  }}
-                  className="text-xs font-semibold text-[#C99A4A] hover:underline"
-                >
-                  Change
-                </button>
+                <div>
+                  <p className="text-xs font-bold text-[#1A1814]">
+                    Kitchen Open (11 AM – 11:30 PM)
+                  </p>
+                  <p className="text-[10px] text-[#77736C]">Fast Delivery & Counter Pickup</p>
+                </div>
               </div>
             </div>
 
@@ -207,7 +188,7 @@ export default function Header({ onSearchClick, transparentHero = false }: Heade
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#1A1814] hover:bg-[#F8F6F1]"
               >
                 <UtensilsCrossed className="w-4 h-4 text-[#C99A4A]" />
-                <span>Our Menu</span>
+                <span>Full Menu</span>
               </Link>
 
               <Link
@@ -225,7 +206,7 @@ export default function Header({ onSearchClick, transparentHero = false }: Heade
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#1A1814] hover:bg-[#F8F6F1]"
               >
                 <User className="w-4 h-4 text-[#C99A4A]" />
-                <span>Guest Profile</span>
+                <span>My Profile & Addresses</span>
               </Link>
             </div>
 
@@ -236,7 +217,7 @@ export default function Header({ onSearchClick, transparentHero = false }: Heade
                 className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-[#C99A4A] text-[#C99A4A] text-xs font-semibold hover:bg-[#C99A4A] hover:text-white transition-colors"
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>Call Kitchen Service</span>
+                <span>Call Restaurant (+91 98765 43210)</span>
               </a>
             </div>
           </div>

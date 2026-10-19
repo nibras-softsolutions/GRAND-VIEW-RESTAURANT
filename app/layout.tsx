@@ -6,7 +6,6 @@ import { OrderProvider } from "@/context/OrderContext";
 import Toast from "@/components/Toast";
 import CartDrawer from "@/components/CartDrawer";
 import FoodDetailModal from "@/components/FoodDetailModal";
-import RoomChangeModal from "@/components/RoomChangeModal";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -23,10 +22,10 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Grand View Hotel — In-Room Dining & Food Ordering",
-  description: "Good Food. Better Stays. Gourmet food and authentic flavours delivered directly to your hotel room at Grand View Hotel.",
-  keywords: ["Grand View Hotel", "In-Room Dining", "Hotel Food Ordering", "Room Service", "Kochi Dining"],
-  authors: [{ name: "Grand View Hotel Hospitality" }],
+  title: "Grand View Restaurant — Online Food Ordering & Delivery",
+  description: "Good Food. Great Moments. Signature gourmet dishes and authentic flavours prepared fresh and delivered to your doorstep by Grand View Restaurant.",
+  keywords: ["Grand View Restaurant", "Online Food Ordering", "Gourmet Food Delivery", "Takeaway Pickup", "Kochi Dining"],
+  authors: [{ name: "Grand View Restaurant" }],
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
@@ -57,7 +56,6 @@ export default function RootLayout({
             {children}
             <FoodDetailModal />
             <CartDrawer />
-            <RoomChangeModal />
             <Toast />
           </CartProvider>
         </OrderProvider>
