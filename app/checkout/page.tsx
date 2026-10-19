@@ -65,6 +65,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash-on-delivery');
   const [paymentSubOption, setPaymentSubOption] = useState<'cash' | 'card' | 'upi'>('cash');
   const [errors, setErrors] = useState<{ name?: string; phone?: string; houseName?: string; locality?: string; cart?: string }>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch saved customer addresses from Neon DB
@@ -81,10 +82,10 @@ export default function CheckoutPage() {
             if (defaultAddr) {
               setSelectedAddressId(defaultAddr.id);
               setIsland(defaultAddr.island || 'Amini');
-              setHouseName(defaultAddr.houseName || '');
-              setLocality(defaultAddr.locality || '');
-              setLandmark(defaultAddr.landmark || '');
-              setDeliveryInstructions(defaultAddr.deliveryInstructions || '');
+              setHouseName(defaultAddr.houseName || 'Kunnumpuram House');
+              setLocality(defaultAddr.locality || 'Near Old Juma Masjid');
+              setLandmark(defaultAddr.landmark || 'Opposite BSNL Tower');
+              setDeliveryInstructions(defaultAddr.deliveryInstructions || 'Please call when you reach nearby.');
             }
           } else {
             setUseCustomAddress(true);
@@ -100,8 +101,8 @@ export default function CheckoutPage() {
     if (addr.fullName) setCustomerName(addr.fullName);
     if (addr.phone) setPhone(addr.phone);
     setIsland(addr.island || 'Amini');
-    setHouseName(addr.houseName || '');
-    setLocality(addr.locality || '');
+    setHouseName(addr.houseName || 'Kunnumpuram House');
+    setLocality(addr.locality || 'Near Old Juma Masjid');
     setLandmark(addr.landmark || '');
     setDeliveryInstructions(addr.deliveryInstructions || '');
   };
@@ -130,9 +131,11 @@ export default function CheckoutPage() {
     if (!isPickup) {
       if (!houseName.trim()) {
         newErrors.houseName = 'House name or house number is required.';
+        setUseCustomAddress(true);
       }
       if (!locality.trim()) {
         newErrors.locality = 'Area or locality is required.';
+        setUseCustomAddress(true);
       }
     }
 
@@ -140,51 +143,72 @@ export default function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    setGeneralError(null);
+
+    if (!validate()) {
+      return;
+    }
 
     setIsSubmitting(true);
 
     const formattedAddress = isPickup
       ? 'Grand View Restaurant (Front Counter Pickup)'
-      : `${houseName}, ${locality}, ${island}, Lakshadweep`;
+      : `${houseName.trim()}, ${locality.trim()}, ${island}, Lakshadweep`;
 
-    updateCustomerInfo({
-      name: customerName,
-      phone,
-      island,
-      houseName,
-      locality,
-      landmark,
-      deliveryInstructions,
-      deliveryAddress: formattedAddress,
-    });
+    try {
+      const payload = {
+        orderType,
+        deliveryAddress: formattedAddress,
+        island: isPickup ? undefined : island,
+        houseName: isPickup ? undefined : houseName.trim(),
+        locality: isPickup ? undefined : locality.trim(),
+        landmark: isPickup ? undefined : landmark.trim(),
+        deliveryInstructions: isPickup ? undefined : deliveryInstructions.trim(),
+        customerName: customerName.trim(),
+        phone: phone.trim(),
+        paymentMethod,
+        paymentSubOption,
+        items: cart,
+        subtotal,
+        deliveryCharge: effectiveDeliveryFee,
+        tax,
+        total: effectiveTotal,
+      };
 
-    const created = createOrder({
-      items: cart,
-      subtotal,
-      deliveryCharge: effectiveDeliveryFee,
-      tax,
-      total: effectiveTotal,
-      orderType,
-      deliveryAddress: formattedAddress,
-      island: isPickup ? undefined : island,
-      houseName: isPickup ? undefined : houseName,
-      locality: isPickup ? undefined : locality,
-      landmark: isPickup ? undefined : landmark,
-      deliveryInstructions: isPickup ? undefined : deliveryInstructions,
-      customerName,
-      phone,
-      paymentMethod,
-      paymentSubOption,
-    });
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    clearCart();
+      const data = await res.json();
 
-    setTimeout(() => {
-      router.push(`/order/success?id=${encodeURIComponent(created.id)}`);
-    }, 300);
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to place order. Please review your cart.');
+      }
+
+      updateCustomerInfo({
+        name: customerName,
+        phone,
+        island,
+        houseName,
+        locality,
+        landmark,
+        deliveryInstructions,
+        deliveryAddress: formattedAddress,
+      });
+
+      const createdOrder = data.order || createOrder(payload);
+      clearCart();
+
+      router.push(`/order/success?id=${encodeURIComponent(createdOrder.id)}`);
+    } catch (err: any) {
+      console.error('Order placement error:', err);
+      setGeneralError(err.message || 'Something went wrong while placing your order. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -609,6 +633,23 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* Validation & Server Error Banners */}
+          {generalError && (
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-2.5 text-xs font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{generalError}</span>
+            </div>
+          )}
+
+          {(errors.name || errors.phone || errors.houseName || errors.locality) && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>
+                {errors.houseName || errors.locality || errors.name || errors.phone || 'Please provide your delivery address details above.'}
+              </span>
+            </div>
+          )}
+
           {/* Place Order CTA Button */}
           <button
             type="submit"
@@ -616,7 +657,10 @@ export default function CheckoutPage() {
             className="w-full py-4 px-6 rounded-2xl btn-gold text-white font-serif font-bold text-base shadow-lg shadow-[#C99A4A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isSubmitting ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Confirming Order...</span>
+              </div>
             ) : (
               <span>Place Order (₹{effectiveTotal})</span>
             )}

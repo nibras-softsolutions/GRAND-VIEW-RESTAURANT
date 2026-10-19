@@ -105,10 +105,11 @@ export async function POST(request: Request) {
     const validatedItems: CartItem[] = [];
 
     for (const clientItem of orderData.items) {
-      const dbItem = dbItemMap.get(clientItem.foodItem?.id);
+      const itemId = clientItem.foodItem?.id || (clientItem as any).id || (clientItem as any).foodId;
+      const dbItem = dbItemMap.get(itemId);
       if (!dbItem) {
         return NextResponse.json(
-          { error: `Item "${clientItem.foodItem?.name || 'Dish'}" is no longer on the menu.` },
+          { error: `Item "${clientItem.foodItem?.name || (clientItem as any).name || 'Dish'}" is no longer on the menu.` },
           { status: 400 }
         );
       }
