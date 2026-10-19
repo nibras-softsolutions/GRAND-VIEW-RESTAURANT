@@ -27,6 +27,14 @@ export const metadata: Metadata = {
   description: "Good Food. Better Stays. Gourmet food and authentic flavours delivered directly to your hotel room at Grand View Hotel.",
   keywords: ["Grand View Hotel", "In-Room Dining", "Hotel Food Ordering", "Room Service", "Kochi Dining"],
   authors: [{ name: "Grand View Hotel Hospitality" }],
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
