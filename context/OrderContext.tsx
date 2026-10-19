@@ -83,6 +83,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    // 1. Load local cache first for instant render
     try {
       const savedOrders = localStorage.getItem('gvr_orders');
       if (savedOrders) {
@@ -99,6 +100,22 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to load orders from storage', e);
     }
     setIsLoaded(true);
+
+    // 2. Fetch live orders from Neon PostgreSQL
+    fetch('/api/orders')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.orders) && data.orders.length > 0) {
+          setOrders((prev) => {
+            const remoteIds = new Set(data.orders.map((o: Order) => o.id));
+            const localOnly = prev.filter((o) => !remoteIds.has(o.id));
+            return [...data.orders, ...localOnly];
+          });
+        }
+      })
+      .catch((err) => {
+        console.log('Neon database sync: using offline cache', err);
+      });
   }, []);
 
   useEffect(() => {
@@ -227,6 +244,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
     setOrders((prev) => [newOrder, ...prev]);
     setCurrentOrder(newOrder);
+
+    // Sync to Neon PostgreSQL
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOrder),
+    }).catch((err) => console.log('Offline: order saved to local state', err));
+
     return newOrder;
   };
 
@@ -240,6 +265,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
     const statuses: OrderStatus[] = ['confirmed', 'preparing', 'out_for_delivery', 'delivered'];
     const targetIdx = statuses.indexOf(newStatus);
+    let targetUpdatedOrder: Order | null = null;
 
     setOrders((prev) =>
       prev.map((order) => {
@@ -262,6 +288,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
           estimatedTime: newStatus === 'delivered' ? 'Delivered' : newStatus === 'out_for_delivery' ? '5–10 mins' : '15–20 mins',
         };
 
+        targetUpdatedOrder = updatedOrder;
+
         if (currentOrder?.id === orderId) {
           setCurrentOrder(updatedOrder);
         }
@@ -269,6 +297,18 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         return updatedOrder;
       })
     );
+
+    // Sync status update to Neon PostgreSQL
+    if (targetUpdatedOrder) {
+      fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          timeline: (targetUpdatedOrder as Order).timeline,
+        }),
+      }).catch((err) => console.log('Offline: status update saved locally', err));
+    }
   };
 
   const advanceOrderSimulation = (orderId: string) => {

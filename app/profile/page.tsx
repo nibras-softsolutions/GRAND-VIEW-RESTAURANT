@@ -36,24 +36,74 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState(customerInfo.name || 'Alexander Wright');
   const [editPhone, setEditPhone] = useState(customerInfo.phone || '+91 98765 43210');
 
+  // Load from Neon DB on mount
+  React.useEffect(() => {
+    fetch('/api/customer')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.profile) {
+          if (data.profile.name) {
+            setEditName(data.profile.name);
+            updateCustomerInfo({ name: data.profile.name, phone: data.profile.phone, email: data.profile.email });
+          }
+          if (data.profile.savedAddresses && data.profile.savedAddresses.length > 0) {
+            setSavedAddresses(data.profile.savedAddresses);
+          }
+          if (data.profile.preferences) {
+            setVegOnly(Boolean(data.profile.preferences.vegOnly));
+            if (data.profile.preferences.spicePreference) {
+              setSpicePreference(data.profile.preferences.spicePreference);
+            }
+          }
+        }
+      })
+      .catch((err) => console.log('Offline: using local profile', err));
+  }, []);
+
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     updateCustomerInfo({ name: editName, phone: editPhone });
     setIsEditing(false);
-    showToast('Profile information updated successfully');
+
+    // Sync to Neon DB
+    fetch('/api/customer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: editName,
+        phone: editPhone,
+        email: customerInfo.email || 'alex.wright@example.com',
+        preferences: { vegOnly, spicePreference },
+        savedAddresses,
+      }),
+    }).catch((err) => console.log('Offline: profile saved locally', err));
+
+    showToast('Profile information updated in Neon database');
   };
 
   const handleSetDefaultAddress = (addrId: string) => {
-    setSavedAddresses((prev) =>
-      prev.map((a) => ({
-        ...a,
-        isDefault: a.id === addrId,
-      }))
-    );
-    const chosen = savedAddresses.find((a) => a.id === addrId);
+    const updated = savedAddresses.map((a) => ({
+      ...a,
+      isDefault: a.id === addrId,
+    }));
+    setSavedAddresses(updated);
+    const chosen = updated.find((a) => a.id === addrId);
     if (chosen) {
       updateCustomerInfo({ deliveryAddress: chosen.address, landmark: chosen.landmark });
       showToast(`Default address set to ${chosen.label}`);
+
+      // Sync to Neon DB
+      fetch('/api/customer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName,
+          phone: editPhone,
+          email: customerInfo.email || 'alex.wright@example.com',
+          preferences: { vegOnly, spicePreference },
+          savedAddresses: updated,
+        }),
+      }).catch((err) => console.log('Offline: address update saved locally', err));
     }
   };
 
