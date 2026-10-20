@@ -18,6 +18,7 @@ export async function POST(request: Request) {
 
     const query = emailOrPhone.trim();
     const sql = getDb();
+    const digits = query.replace(/\D/g, '');
 
     // Look up customer by phone or email
     const rows = await sql`
@@ -26,14 +27,15 @@ export async function POST(request: Request) {
       LEFT JOIN customer_addresses a ON a.customer_id = c.id AND a.is_default = true
       WHERE c.phone = ${query} 
          OR c.phone = ${`+91 ${query}`}
-         OR c.email = ${query.toLowerCase()}
+         OR (LENGTH(${digits}) >= 10 AND regexp_replace(c.phone, '\\D', '', 'g') LIKE ${'%' + digits.slice(-10)})
+         OR LOWER(c.email) = ${query.toLowerCase()}
       LIMIT 1;
     `;
 
     if (rows.length === 0) {
       return NextResponse.json(
-        { error: 'No account found with this phone number or email. Please register.' },
-        { status: 404 }
+        { error: 'No account found with this phone number or email. Please tap "Create Account" to register.' },
+        { status: 400 }
       );
     }
 
