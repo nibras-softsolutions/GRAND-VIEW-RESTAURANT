@@ -105,13 +105,12 @@ export const ReferenceFoodDetailModal: React.FC<ReferenceFoodDetailModalProps> =
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Centered Food Graphic */}
+          {/* Hero Food Photography */}
           <View style={styles.graphicContainer}>
-            <View style={styles.graphicCircle} />
             <Image
               source={item.asset}
               style={styles.foodImage}
-              resizeMode="contain"
+              resizeMode="cover"
             />
           </View>
 
@@ -264,21 +263,20 @@ const styles = StyleSheet.create({
   },
   graphicContainer: {
     height: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FAFBFB',
-    position: 'relative',
-  },
-  graphicCircle: {
-    position: 'absolute',
-    width: 170,
-    height: 170,
-    borderRadius: 85,
-    backgroundColor: '#EDF8E5',
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   foodImage: {
-    width: 150,
-    height: 150,
+    width: '100%',
+    height: '100%',
   },
   body: {
     padding: 20,

@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { useCart } from '../../context/CartContext';
-import { placeOrder } from '../../api/orders';
+import { placeOrder, saveOrderLocally } from '../../api/orders';
 import { SavedAddress, OrderType, PaymentMethod } from '../../types';
 
 interface CheckoutScreenProps {
@@ -112,16 +112,62 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
       const result = await placeOrder(payload);
 
       if (result && result.order) {
+        await saveOrderLocally(result.order);
         clearCart();
         onOrderPlaced(result.order.id);
       } else {
         setErrorMsg('Unable to place order. Please try again.');
       }
     } catch (err: any) {
-      // Offline fallback order simulation for Lakshadweep intermittent connectivity
-      const offlineOrderId = `GV-${Math.floor(1000 + Math.random() * 9000)}`;
-      clearCart();
-      onOrderPlaced(offlineOrderId);
+      console.error('Order placement failed:', err);
+      const msg = err.message || 'Unable to connect to Grand View servers. Please check your network connection.';
+      setErrorMsg(msg);
+      Alert.alert(
+        'Order Placement Error',
+        `${msg}\n\nWould you like to save this order for local tracking and call the restaurant hotline?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Save & Call Hotline',
+            onPress: async () => {
+              const offlineOrderId = `GV-${Math.floor(1000 + Math.random() * 9000)}`;
+              const offlineOrder: any = {
+                id: offlineOrderId,
+                createdAt: 'Just now',
+                items: cart,
+                subtotal,
+                deliveryCharge: deliveryFee,
+                tax: 0,
+                total,
+                orderType,
+                deliveryAddress: `${houseName}, ${locality}, ${island} (Landmark: ${landmark})`,
+                island,
+                houseName,
+                locality,
+                landmark,
+                deliveryInstructions: instructions,
+                customerName: fullName,
+                phone,
+                paymentMethod,
+                status: 'pending',
+                estimatedTime: '25–35 mins',
+                timeline: [
+                  {
+                    status: 'pending',
+                    title: 'Order Placed (Local)',
+                    description: 'Your order was saved locally on device.',
+                    completed: true,
+                    time: 'Just now',
+                  },
+                ],
+              };
+              await saveOrderLocally(offlineOrder);
+              clearCart();
+              onOrderPlaced(offlineOrderId);
+            },
+          },
+        ]
+      );
     } finally {
       setSubmitting(false);
     }
@@ -284,18 +330,18 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
           <Text style={styles.cardTitle}>Order Summary</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total Items ({cart.length})</Text>
-            <Text style={styles.summaryVal}>${subtotal.toFixed(2)}</Text>
+            <Text style={styles.summaryVal}>₹{subtotal.toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery Charge</Text>
             <Text style={styles.summaryVal}>
-              {deliveryFee === 0 ? 'FREE' : `$${deliveryFee.toFixed(2)}`}
+              {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee.toFixed(2)}`}
             </Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.summaryRow}>
             <Text style={styles.totalText}>Authoritative Total</Text>
-            <Text style={styles.totalAmount}>${total.toFixed(2)}</Text>
+            <Text style={styles.totalAmount}>₹{total.toFixed(2)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -304,7 +350,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
       <View style={styles.bottomBar}>
         <View>
           <Text style={styles.payLabel}>Authoritative Total</Text>
-          <Text style={styles.payAmount}>${total.toFixed(2)}</Text>
+          <Text style={styles.payAmount}>₹{total.toFixed(2)}</Text>
         </View>
 
         <TouchableOpacity
@@ -512,7 +558,8 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: Colors.surface,
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 14,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
     borderTopWidth: 1,
     borderTopColor: '#ECEEF1',
     flexDirection: 'row',

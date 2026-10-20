@@ -1,10 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeliveryPersonUser } from '../types';
-import { getDeliveryToken, setDeliveryToken } from '../api/client';
+import { getDeliveryToken, setDeliveryToken, getCustomerToken, setCustomerToken } from '../api/client';
 import { loginDeliveryPerson, logoutDeliveryPerson, fetchDeliveryProfile } from '../api/delivery';
+import { loginCustomer, registerCustomer, RegisterPayload } from '../api/customer';
 
 export type UserRole = 'customer' | 'delivery';
+
+export interface CustomerUser {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  island?: string;
+  houseName?: string;
+  locality?: string;
+  landmark?: string;
+}
 
 interface AuthContextType {
   role: UserRole;
@@ -13,23 +25,30 @@ interface AuthContextType {
   switchToCustomer: () => void;
   switchToDelivery: () => void;
   deliveryPerson: DeliveryPersonUser | null;
+  customerUser: CustomerUser | null;
   isDeliveryLoggedIn: boolean;
+  isCustomerLoggedIn: boolean;
   isLoading: boolean;
   deliveryLogin: (phone: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   loginDelivery: (phone: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   deliveryLogout: () => Promise<void>;
   logoutDelivery: () => Promise<void>;
   reloadDeliveryProfile: () => Promise<void>;
+  loginCustomerAuth: (emailOrPhone: string, pass: string) => Promise<{ success: boolean; error?: string; customer?: CustomerUser }>;
+  registerCustomerAuth: (payload: RegisterPayload) => Promise<{ success: boolean; error?: string; customer?: CustomerUser }>;
+  logoutCustomerAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ROLE_STORAGE_KEY = 'gvr_active_role';
 const DELIVERY_USER_KEY = 'gvr_delivery_user';
+const CUSTOMER_USER_KEY = 'gvr_customer_user';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRoleState] = useState<UserRole>('customer');
   const [deliveryPerson, setDeliveryPerson] = useState<DeliveryPersonUser | null>(null);
+  const [customerUser, setCustomerUser] = useState<CustomerUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -40,6 +59,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRoleState('delivery');
         }
 
+        // 1. Check saved customer session
+        const custToken = await getCustomerToken();
+        const savedCustomer = await AsyncStorage.getItem(CUSTOMER_USER_KEY);
+        if (custToken && savedCustomer) {
+          try {
+            setCustomerUser(JSON.parse(savedCustomer));
+          } catch (e) {}
+        }
+
+        // 2. Check saved delivery session
         const token = await getDeliveryToken();
         const savedUser = await AsyncStorage.getItem(DELIVERY_USER_KEY);
         if (token && savedUser) {
@@ -84,6 +113,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const switchToDelivery = () => {
     setRole('delivery');
+  };
+
+  // Customer Authentication
+  const loginCustomerAuth = async (emailOrPhone: string, pass: string) => {
+    try {
+      const res = await loginCustomer(emailOrPhone, pass);
+      if (res.success && res.customer) {
+        const user: CustomerUser = {
+          id: res.customer.id,
+          name: res.customer.name,
+          phone: res.customer.phone,
+          email: res.customer.email,
+          island: res.customer.island,
+          houseName: res.customer.houseName,
+          locality: res.customer.locality,
+          landmark: res.customer.landmark,
+        };
+        setCustomerUser(user);
+        await AsyncStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(user));
+        await setRole('customer');
+        return { success: true, customer: user };
+      }
+      return { success: false, error: res.error || 'Login failed' };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Network error' };
+    }
+  };
+
+  const registerCustomerAuth = async (payload: RegisterPayload) => {
+    try {
+      const res = await registerCustomer(payload);
+      if (res.success && res.customer) {
+        const user: CustomerUser = {
+          id: res.customer.id,
+          name: res.customer.name,
+          phone: res.customer.phone,
+          email: res.customer.email,
+          island: res.customer.island,
+          houseName: res.customer.houseName,
+          locality: res.customer.locality,
+          landmark: res.customer.landmark,
+        };
+        setCustomerUser(user);
+        await AsyncStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(user));
+        await setRole('customer');
+        return { success: true, customer: user };
+      }
+      return { success: false, error: res.error || 'Registration failed' };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Network error' };
+    }
+  };
+
+  const logoutCustomerAuth = async () => {
+    try {
+      await setCustomerToken(null);
+      await AsyncStorage.removeItem(CUSTOMER_USER_KEY);
+      setCustomerUser(null);
+    } catch (e) {}
   };
 
   const deliveryLogin = async (phone: string, pass: string) => {
@@ -137,13 +225,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchToCustomer,
         switchToDelivery,
         deliveryPerson,
+        customerUser,
         isDeliveryLoggedIn: !!deliveryPerson,
+        isCustomerLoggedIn: !!customerUser,
         isLoading,
         deliveryLogin,
         loginDelivery: deliveryLogin,
         deliveryLogout,
         logoutDelivery: deliveryLogout,
         reloadDeliveryProfile,
+        loginCustomerAuth,
+        registerCustomerAuth,
+        logoutCustomerAuth,
       }}
     >
       {children}

@@ -4,97 +4,204 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
   StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
-import { ReferenceAssets } from '../theme/assets';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 interface AuthScreenProps {
   onLoginSuccess: () => void;
 }
 
-const { width } = Dimensions.get('window');
+const ISLANDS = [
+  'Amini',
+  'Kavaratti',
+  'Agatti',
+  'Andrott',
+  'Kalpeni',
+  'Kadmat',
+  'Kiltan',
+  'Chetlat',
+  'Minicoy',
+];
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
-  const { loginDelivery, switchToCustomer } = useAuth();
+  const {
+    loginCustomerAuth,
+    registerCustomerAuth,
+    loginDelivery,
+    switchToCustomer,
+  } = useAuth();
 
-  const [emailOrPhone, setEmailOrPhone] = useState('dailyflutterui@gmail.com');
-  const [password, setPassword] = useState('123456');
-  const [showPassword, setShowPassword] = useState(false);
-  const [keepSignedIn, setKeepSignedIn] = useState(true);
+  const { updateCustomerInfo, updateDeliveryAddress } = useCart();
+
+  const [activeTab, setActiveTab] = useState<'signin' | 'register'>('signin');
+
+  // Sign In fields
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  // Register fields
+  const [regName, setRegName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regIsland, setRegIsland] = useState('Amini');
+  const [regHouse, setRegHouse] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+
+  // Status & Errors
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Errors matching reference video
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+  // Real-time Sign In
+  const handleSignIn = async () => {
+    setErrorMessage(null);
 
-  const validateEmail = (val: string) => {
-    setEmailOrPhone(val);
-    if (!val.trim()) {
-      setEmailError('Please enter your email or phone');
+    const idVal = loginIdentifier.trim();
+    if (!idVal) {
+      setErrorMessage('Please enter your phone number or email.');
       return;
     }
-    // If it contains @ but does not look like a valid email yet
-    if (val.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-      setEmailError("That email doesn't look right");
-    } else {
-      setEmailError(null);
-    }
-  };
 
-  const validatePassword = (val: string) => {
-    setPassword(val);
-    if (!val) {
-      setPasswordError('Please enter your password');
-    } else if (val.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-    } else {
-      setPasswordError(null);
-    }
-  };
-
-  const handleLogin = async () => {
-    // Check validation
-    if (!emailOrPhone.trim()) {
-      setEmailError('Please enter your email or phone');
-      return;
-    }
-    if (emailOrPhone.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone)) {
-      setEmailError("That email doesn't look right");
-      return;
-    }
-    if (!password || password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+    if (!loginPassword || loginPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
       return;
     }
 
     setLoading(true);
 
-    // Simulate authentic login animation as seen in reference frames 070-072
-    setTimeout(async () => {
-      // If delivery phone number or specific role
-      if (emailOrPhone.includes('delivery') || emailOrPhone === '9447200001' || emailOrPhone === '9447200002') {
-        try {
-          await loginDelivery(emailOrPhone, password);
-        } catch (e) {
-          // Fallback to customer if delivery login fails
-          switchToCustomer();
+    try {
+      // 1. Check if user is logging in as delivery partner
+      if (idVal.includes('delivery') || idVal === '9447200001' || idVal === '9447200002') {
+        const delRes = await loginDelivery(idVal, loginPassword);
+        if (delRes.success) {
+          setLoading(false);
+          onLoginSuccess();
+          return;
         }
-      } else {
-        switchToCustomer();
       }
 
+      // 2. Perform real-time customer login against Neon DB
+      const res = await loginCustomerAuth(idVal, loginPassword);
+
+      if (res.success && res.customer) {
+        // Sync customer profile with cart & addresses
+        updateCustomerInfo({
+          name: res.customer.name,
+          phone: res.customer.phone,
+          email: res.customer.email || '',
+          island: res.customer.island || 'Amini',
+          houseName: res.customer.houseName || '',
+        });
+
+        if (res.customer.houseName) {
+          updateDeliveryAddress({
+            id: 'addr-primary',
+            label: 'Home',
+            fullName: res.customer.name,
+            phone: res.customer.phone,
+            island: res.customer.island || 'Amini',
+            houseName: res.customer.houseName,
+            locality: res.customer.locality || '',
+            landmark: res.customer.landmark || '',
+            isDefault: true,
+          });
+        }
+
+        setLoading(false);
+        onLoginSuccess();
+      } else {
+        setLoading(false);
+        setErrorMessage(res.error || 'Invalid credentials. Please try again.');
+      }
+    } catch (err: any) {
       setLoading(false);
-      onLoginSuccess();
-    }, 1200);
+      setErrorMessage(err.message || 'Unable to connect to server. Please check your network.');
+    }
+  };
+
+  // Real-time Registration
+  const handleRegister = async () => {
+    setErrorMessage(null);
+
+    if (!regName.trim()) {
+      setErrorMessage('Please enter your full name.');
+      return;
+    }
+
+    const cleanPhone = regPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      setErrorMessage('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if (!regPassword || regPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await registerCustomerAuth({
+        name: regName.trim(),
+        phone: regPhone.trim(),
+        email: regEmail.trim(),
+        password: regPassword,
+        island: regIsland,
+        houseName: regHouse.trim(),
+      });
+
+      if (res.success && res.customer) {
+        updateCustomerInfo({
+          name: res.customer.name,
+          phone: res.customer.phone,
+          email: res.customer.email || '',
+          island: res.customer.island || 'Amini',
+          houseName: res.customer.houseName || '',
+        });
+
+        updateDeliveryAddress({
+          id: 'addr-primary',
+          label: 'Home',
+          fullName: res.customer.name,
+          phone: res.customer.phone,
+          island: res.customer.island || 'Amini',
+          houseName: res.customer.houseName || 'Home',
+          locality: '',
+          landmark: '',
+          isDefault: true,
+        });
+
+        setLoading(false);
+        Alert.alert(
+          'Account Created',
+          `Welcome to Grand View Restaurant, ${res.customer.name}!`,
+          [{ text: 'Start Ordering', onPress: onLoginSuccess }]
+        );
+      } else {
+        setLoading(false);
+        setErrorMessage(res.error || 'Registration failed. Please try again.');
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setErrorMessage(err.message || 'Network error during registration.');
+    }
+  };
+
+  const handleGuestContinue = () => {
+    switchToCustomer();
+    onLoginSuccess();
   };
 
   return (
@@ -107,171 +214,302 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Curved Hero Header (Matches reference frame 035) */}
+        {/* Top Header Card */}
         <View style={styles.heroContainer}>
           <View style={styles.heroLeft}>
-            <View style={styles.logoRow}>
-              <Text style={styles.logoFood}>Food</Text>
-              <Text style={styles.logoIe}>ie.</Text>
-            </View>
-            <Text style={styles.heroTagline}>
-              {'Hot meals,\nright at your door.'}
-            </Text>
+            <Text style={styles.restaurantBrand}>Grand View</Text>
+            <Text style={styles.restaurantTagline}>Good Food. Great Moments.</Text>
+            <Text style={styles.heroIslandNotice}>Lakshadweep Island Delivery</Text>
           </View>
 
           <View style={styles.heroRight}>
-            <Image
-              source={ReferenceAssets.scooterLogin}
-              style={styles.scooterHeroImage}
-              resizeMode="contain"
-            />
+            <View style={styles.heroIconBadge}>
+              <Ionicons name="restaurant" size={32} color={Colors.white} />
+            </View>
           </View>
         </View>
 
-        {/* Main Form Body */}
-        <View style={styles.formCard}>
-          <Text style={styles.heading}>Welcome Back</Text>
-
-          {/* Email / Phone Input */}
-          <View style={styles.inputContainer}>
-            <View
-              style={[
-                styles.inputWrapper,
-                emailError ? styles.inputWrapperError : null,
-              ]}
-            >
-              <Ionicons
-                name="mail-outline"
-                size={20}
-                color={emailError ? Colors.danger : Colors.textMuted}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.textInput}
-                placeholder="Email or phone"
-                placeholderTextColor={Colors.textMuted}
-                value={emailOrPhone}
-                onChangeText={validateEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
-            </View>
-            {emailError ? (
-              <Text style={styles.errorText}>{emailError}</Text>
-            ) : null}
-          </View>
-
-          {/* Password Input */}
-          <View style={styles.inputContainer}>
-            <View
-              style={[
-                styles.inputWrapper,
-                passwordError ? styles.inputWrapperError : null,
-              ]}
-            >
-              <Ionicons
-                name="lock-closed-outline"
-                size={20}
-                color={passwordError ? Colors.danger : Colors.textMuted}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.textInput}
-                placeholder="Password"
-                placeholderTextColor={Colors.textMuted}
-                value={password}
-                onChangeText={validatePassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={Colors.textMuted}
-                />
-              </TouchableOpacity>
-            </View>
-            {passwordError ? (
-              <Text style={styles.errorText}>{passwordError}</Text>
-            ) : null}
-          </View>
-
-          {/* Keep signed in & Forgot Password */}
-          <View style={styles.optionsRow}>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setKeepSignedIn(!keepSignedIn)}
-              activeOpacity={0.8}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  keepSignedIn && styles.checkboxChecked,
-                ]}
-              >
-                {keepSignedIn && (
-                  <Ionicons name="checkmark" size={14} color={Colors.white} />
-                )}
-              </View>
-              <Text style={styles.checkboxLabel}>Keep me signed in</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity>
-              <Text style={styles.forgotText}>Forgot Password?</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Log In Button (Matches Frame 070 loading state) */}
+        {/* Tab Switcher: Sign In vs Create Account */}
+        <View style={styles.tabSwitcher}>
           <TouchableOpacity
-            style={styles.loginButton}
-            onPress={handleLogin}
-            disabled={loading}
-            activeOpacity={0.85}
+            style={[styles.tabButton, activeTab === 'signin' && styles.tabButtonActive]}
+            onPress={() => {
+              setActiveTab('signin');
+              setErrorMessage(null);
+            }}
+            activeOpacity={0.8}
           >
-            {loading ? (
-              <ActivityIndicator size="small" color={Colors.white} />
-            ) : (
-              <Text style={styles.loginButtonText}>Log In</Text>
-            )}
+            <Text style={[styles.tabButtonText, activeTab === 'signin' && styles.tabButtonTextActive]}>
+              Sign In
+            </Text>
           </TouchableOpacity>
 
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <Text style={styles.dividerText}>Or continue with</Text>
-          </View>
-
-          {/* Social Logins */}
-          <View style={styles.socialRow}>
-            <TouchableOpacity
-              style={styles.socialButton}
-              onPress={onLoginSuccess}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="logo-google" size={18} color="#EA4335" />
-              <Text style={styles.socialButtonText}>Google</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.socialButton}
-              onPress={onLoginSuccess}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="logo-apple" size={20} color="#000000" />
-              <Text style={styles.socialButtonText}>Apple</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Footer Sign Up */}
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={onLoginSuccess}>
-              <Text style={styles.signUpText}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'register' && styles.tabButtonActive]}
+            onPress={() => {
+              setActiveTab('register');
+              setErrorMessage(null);
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.tabButtonText, activeTab === 'register' && styles.tabButtonTextActive]}>
+              Create Account
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Error Notification Alert */}
+        {errorMessage && (
+          <View style={styles.errorBanner}>
+            <Ionicons name="alert-circle" size={18} color={Colors.danger} />
+            <Text style={styles.errorBannerText}>{errorMessage}</Text>
+          </View>
+        )}
+
+        {/* =========================================
+            SIGN IN FORM
+           ========================================= */}
+        {activeTab === 'signin' && (
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Welcome Back</Text>
+            <Text style={styles.formSubtitle}>Sign in to track orders and reorder favorites</Text>
+
+            {/* Email / Phone */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Mobile Number or Email</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. 9447200000 or email"
+                  placeholderTextColor={Colors.textMuted}
+                  value={loginIdentifier}
+                  onChangeText={(val) => {
+                    setLoginIdentifier(val);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+            </View>
+
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter your password"
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry={!showLoginPassword}
+                  value={loginPassword}
+                  onChangeText={(val) => {
+                    setLoginPassword(val);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowLoginPassword(!showLoginPassword)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons
+                    name={showLoginPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={Colors.textMuted}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Sign In CTA */}
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={handleSignIn}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <>
+                  <Text style={styles.submitBtnText}>Sign In</Text>
+                  <Ionicons name="arrow-forward" size={18} color={Colors.white} />
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.switchModeRow}
+              onPress={() => {
+                setActiveTab('register');
+                setErrorMessage(null);
+              }}
+            >
+              <Text style={styles.switchModeText}>
+                Don't have an account? <Text style={styles.switchModeBold}>Create one</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* =========================================
+            REGISTER (CREATE ACCOUNT) FORM
+           ========================================= */}
+        {activeTab === 'register' && (
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Create Account</Text>
+            <Text style={styles.formSubtitle}>Join Grand View for fast Lakshadweep delivery</Text>
+
+            {/* Full Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Full Name *</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. Mohammed Nibras"
+                  placeholderTextColor={Colors.textMuted}
+                  value={regName}
+                  onChangeText={setRegName}
+                />
+              </View>
+            </View>
+
+            {/* Mobile Phone */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Mobile Number (10 Digits) *</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="call-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. 9447200000"
+                  placeholderTextColor={Colors.textMuted}
+                  value={regPhone}
+                  onChangeText={setRegPhone}
+                  keyboardType="phone-pad"
+                  maxLength={13}
+                />
+              </View>
+            </View>
+
+            {/* Email (Optional) */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Email Address (Optional)</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. yourname@gmail.com"
+                  placeholderTextColor={Colors.textMuted}
+                  value={regEmail}
+                  onChangeText={setRegEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+            </View>
+
+            {/* Select Island */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Select Your Island *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.islandRow}>
+                {ISLANDS.map((isl) => (
+                  <TouchableOpacity
+                    key={isl}
+                    style={[styles.islandChip, regIsland === isl && styles.islandChipActive]}
+                    onPress={() => setRegIsland(isl)}
+                  >
+                    <Text style={[styles.islandChipText, regIsland === isl && styles.islandChipTextActive]}>
+                      {isl}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* House Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>House Name / Delivery Landmark</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="home-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. Baitul Noor / Near Post Office"
+                  placeholderTextColor={Colors.textMuted}
+                  value={regHouse}
+                  onChangeText={setRegHouse}
+                />
+              </View>
+            </View>
+
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Create Password (Min 6 chars) *</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Choose a strong password"
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry={!showRegPassword}
+                  value={regPassword}
+                  onChangeText={setRegPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowRegPassword(!showRegPassword)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons
+                    name={showRegPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={Colors.textMuted}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Register CTA */}
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={handleRegister}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <>
+                  <Text style={styles.submitBtnText}>Create Account</Text>
+                  <Ionicons name="checkmark-circle" size={18} color={Colors.white} />
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.switchModeRow}
+              onPress={() => {
+                setActiveTab('signin');
+                setErrorMessage(null);
+              }}
+            >
+              <Text style={styles.switchModeText}>
+                Already have an account? <Text style={styles.switchModeBold}>Sign In</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Continue as Guest option */}
+        <TouchableOpacity
+          style={styles.guestBtn}
+          onPress={handleGuestContinue}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.guestBtnText}>Explore Menu as Guest</Text>
+          <Ionicons name="arrow-forward" size={14} color={Colors.textMuted} />
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -284,203 +522,240 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 30,
+    paddingBottom: 40,
   },
   heroContainer: {
     backgroundColor: Colors.primary,
-    borderBottomLeftRadius: 36,
-    borderBottomRightRadius: 36,
+    paddingTop: Platform.OS === 'ios' ? 56 : 36,
+    paddingBottom: 32,
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'ios' ? 56 : 40,
-    paddingBottom: 24,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    overflow: 'hidden',
+    alignItems: 'center',
     shadowColor: Colors.primaryDark,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.25,
     shadowRadius: 10,
-    elevation: 6,
+    elevation: 8,
   },
   heroLeft: {
     flex: 1,
   },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 6,
-  },
-  logoFood: {
-    fontSize: 30,
-    fontWeight: '800',
+  restaurantBrand: {
+    fontSize: 26,
+    fontWeight: '900',
     color: Colors.white,
     letterSpacing: -0.5,
   },
-  logoIe: {
-    fontSize: 30,
-    fontWeight: '800',
-    color: '#B5F169',
-    letterSpacing: -0.5,
+  restaurantTagline: {
+    fontSize: 14,
+    color: '#FEF3C7',
+    fontWeight: '600',
+    marginTop: 2,
   },
-  heroTagline: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.88)',
-    lineHeight: 18,
-    fontWeight: '500',
+  heroIslandNotice: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   heroRight: {
-    width: 140,
-    height: 120,
+    marginLeft: 12,
+  },
+  heroIconBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
-  scooterHeroImage: {
-    width: '100%',
-    height: '100%',
+
+  /* Tab switcher */
+  tabSwitcher: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginTop: 20,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    padding: 4,
   },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  tabButtonActive: {
+    backgroundColor: Colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textMuted,
+  },
+  tabButtonTextActive: {
+    color: Colors.primary,
+    fontWeight: '800',
+  },
+
+  /* Error banner */
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    marginHorizontal: 20,
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 12,
+  },
+  errorBannerText: {
+    flex: 1,
+    fontSize: 12,
+    color: Colors.danger,
+    fontWeight: '600',
+  },
+
+  /* Form Card */
   formCard: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
+    backgroundColor: Colors.surface,
+    marginHorizontal: 20,
+    marginTop: 14,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#ECEEF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  heading: {
-    fontSize: 24,
+  formTitle: {
+    fontSize: 20,
     fontWeight: '800',
     color: Colors.textPrimary,
-    marginBottom: 20,
-    letterSpacing: -0.3,
   },
-  inputContainer: {
-    marginBottom: 16,
+  formSubtitle: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 2,
+    marginBottom: 18,
+  },
+
+  inputGroup: {
+    marginBottom: 14,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.inputBackground,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 52,
-  },
-  inputWrapperError: {
-    borderColor: Colors.inputBorderError,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 8,
   },
   textInput: {
     flex: 1,
     fontSize: 14,
     color: Colors.textPrimary,
-    height: '100%',
   },
-  errorText: {
-    fontSize: 11,
-    color: Colors.danger,
-    marginTop: 4,
-    marginLeft: 6,
-    fontWeight: '500',
-  },
-  optionsRow: {
+
+  /* Island selector chips */
+  islandRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-    marginTop: 4,
+    marginVertical: 4,
   },
-  checkboxContainer: {
+  islandChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    marginRight: 8,
+  },
+  islandChipActive: {
+    backgroundColor: Colors.primary,
+  },
+  islandChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textMuted,
+  },
+  islandChipTextActive: {
+    color: Colors.white,
+    fontWeight: '700',
+  },
+
+  submitBtn: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: Colors.cardBorder,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-  },
-  checkboxChecked: {
-    backgroundColor: Colors.primaryLight,
-    borderColor: Colors.primaryLight,
-  },
-  checkboxLabel: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  forgotText: {
-    fontSize: 13,
-    color: Colors.primaryLight,
-    fontWeight: '600',
-  },
-  loginButton: {
     backgroundColor: Colors.primary,
-    height: 54,
-    borderRadius: 27,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 24,
+    marginTop: 8,
     shadowColor: Colors.primaryDark,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  loginButtonText: {
+  submitBtnText: {
     color: Colors.white,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.2,
+    fontSize: 15,
+    fontWeight: '800',
   },
-  dividerRow: {
+
+  switchModeRow: {
     alignItems: 'center',
-    marginVertical: 22,
+    marginTop: 14,
   },
-  dividerText: {
+  switchModeText: {
     fontSize: 12,
     color: Colors.textMuted,
-    fontWeight: '500',
   },
-  socialRow: {
-    flexDirection: 'row',
-    gap: 14,
-    marginBottom: 24,
+  switchModeBold: {
+    color: Colors.primary,
+    fontWeight: '700',
   },
-  socialButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: Colors.inputBackground,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  socialButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  footerRow: {
+
+  guestBtn: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    gap: 4,
+    marginTop: 20,
+    paddingVertical: 10,
   },
-  footerText: {
+  guestBtnText: {
     fontSize: 13,
     color: Colors.textMuted,
-  },
-  signUpText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.primaryLight,
+    fontWeight: '600',
   },
 });

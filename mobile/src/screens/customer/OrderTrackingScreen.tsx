@@ -8,10 +8,12 @@ import {
   Platform,
   RefreshControl,
   Linking,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
-import { fetchOrderById } from '../../api/orders';
+import { fetchOrderById, cancelOrder } from '../../api/orders';
 import { Order, OrderStatus } from '../../types';
 
 interface OrderTrackingScreenProps {
@@ -60,6 +62,8 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>('confirmed');
 
+  const [cancelling, setCancelling] = useState(false);
+
   const loadOrder = async () => {
     try {
       const data = await fetchOrderById(orderId);
@@ -70,6 +74,32 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
     } catch (e) {
       // Keep existing status
     }
+  };
+
+  const handleCancelOrder = () => {
+    Alert.alert(
+      'Cancel Order',
+      `Are you sure you want to cancel order #${orderId}? The restaurant kitchen will be notified immediately.`,
+      [
+        { text: 'Keep Order', style: 'cancel' },
+        {
+          text: 'Yes, Cancel Order',
+          style: 'destructive',
+          onPress: async () => {
+            setCancelling(true);
+            try {
+              await cancelOrder(orderId, 'Cancelled by customer from tracking screen');
+              setCurrentStatus('cancelled');
+              Alert.alert('Order Cancelled', `Order #${orderId} has been successfully cancelled.`);
+            } catch (err) {
+              Alert.alert('Error', 'Unable to cancel order right now. Please call restaurant hotline.');
+            } finally {
+              setCancelling(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   useEffect(() => {
@@ -123,18 +153,34 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
           />
         }
       >
-        {/* Confirmed Banner */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroIconCircle}>
-            <Ionicons name="restaurant" size={28} color={Colors.white} />
+        {/* Status Hero Banner */}
+        {currentStatus === 'cancelled' ? (
+          <View style={[styles.heroCard, { backgroundColor: '#FEF2F2' }]}>
+            <View style={[styles.heroIconCircle, { backgroundColor: Colors.danger }]}>
+              <Ionicons name="close-circle" size={28} color={Colors.white} />
+            </View>
+            <Text style={[styles.heroTitle, { color: Colors.danger }]}>Order Cancelled</Text>
+            <Text style={styles.orderNumberText}>Order #{orderId}</Text>
+            <View style={[styles.estTimeBadge, { backgroundColor: '#FEE2E2' }]}>
+              <Ionicons name="alert-circle" size={14} color={Colors.danger} />
+              <Text style={[styles.estTimeText, { color: Colors.danger }]}>
+                Cancelled by customer • Kitchen notified
+              </Text>
+            </View>
           </View>
-          <Text style={styles.heroTitle}>Grand View Restaurant</Text>
-          <Text style={styles.orderNumberText}>Order #{orderId}</Text>
-          <View style={styles.estTimeBadge}>
-            <Ionicons name="time" size={14} color={Colors.primaryDark} />
-            <Text style={styles.estTimeText}>Est. Arrival: 25 - 35 mins</Text>
+        ) : (
+          <View style={styles.heroCard}>
+            <View style={styles.heroIconCircle}>
+              <Ionicons name="restaurant" size={28} color={Colors.white} />
+            </View>
+            <Text style={styles.heroTitle}>Grand View Restaurant</Text>
+            <Text style={styles.orderNumberText}>Order #{orderId}</Text>
+            <View style={styles.estTimeBadge}>
+              <Ionicons name="time" size={14} color={Colors.primaryDark} />
+              <Text style={styles.estTimeText}>Est. Arrival: 25 - 35 mins</Text>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Visual Timeline (No live GPS) */}
         <View style={styles.timelineCard}>
@@ -241,13 +287,41 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
 
       {/* Bottom Action */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={styles.homeBtn}
-          onPress={onBackToHome}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.homeBtnText}>Return to Home</Text>
-        </TouchableOpacity>
+        {(currentStatus === 'pending' || currentStatus === 'confirmed' || currentStatus === 'preparing') ? (
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.cancelOrderBtn}
+              onPress={handleCancelOrder}
+              disabled={cancelling}
+              activeOpacity={0.8}
+            >
+              {cancelling ? (
+                <ActivityIndicator size="small" color={Colors.danger} />
+              ) : (
+                <>
+                  <Ionicons name="close-circle-outline" size={16} color={Colors.danger} />
+                  <Text style={styles.cancelOrderBtnText}>Cancel Order</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.homeBtnSmall}
+              onPress={onBackToHome}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.homeBtnText}>Return to Home</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.homeBtn}
+            onPress={onBackToHome}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.homeBtnText}>Return to Home</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -500,9 +574,46 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: Colors.surface,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
     borderTopWidth: 1,
     borderTopColor: '#ECEEF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  cancelOrderBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    paddingVertical: 13,
+    borderRadius: 24,
+  },
+  cancelOrderBtnText: {
+    color: Colors.danger,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  homeBtnSmall: {
+    flex: 1.2,
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   homeBtn: {
     backgroundColor: Colors.primary,

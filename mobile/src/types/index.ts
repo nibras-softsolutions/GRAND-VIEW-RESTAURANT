@@ -6,7 +6,8 @@ export type OrderStatus =
   | 'ready_for_pickup'
   | 'out_for_delivery'
   | 'delivered'
-  | 'rejected';
+  | 'rejected'
+  | 'cancelled';
 
 export type OrderType = 'delivery' | 'pickup';
 

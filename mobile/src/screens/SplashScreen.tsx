@@ -2,14 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   Animated,
   Dimensions,
-  Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
-import { ReferenceAssets } from '../theme/assets';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -23,7 +21,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
   const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
-    // Entrance animation (Fade & Scale up scooter & text)
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -43,16 +40,15 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
       }),
     ]).start();
 
-    // Auto-proceed after ~2 seconds (as in reference recording)
     const timer = setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 400,
+        duration: 350,
         useNativeDriver: true,
       }).start(() => {
         onFinish();
       });
-    }, 2200);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -68,24 +64,21 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           },
         ]}
       >
-        {/* Soft green backdrop circle */}
-        <View style={styles.glowCircle} />
-
-        {/* Scooter Courier Illustration */}
-        <Image
-          source={ReferenceAssets.scooterSplash}
-          style={styles.scooterImage}
-          resizeMode="contain"
-        />
+        {/* Soft green backdrop circle with vector badge */}
+        <View style={styles.glowCircle}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="bicycle" size={54} color={Colors.white} />
+          </View>
+        </View>
 
         {/* App Title */}
         <View style={styles.titleRow}>
-          <Text style={styles.titleFood}>Food</Text>
-          <Text style={styles.titleIe}>ie.</Text>
+          <Text style={styles.titleGrand}>Grand </Text>
+          <Text style={styles.titleView}>View</Text>
         </View>
 
         {/* Subtitle */}
-        <Text style={styles.subtitle}>Delicious food, delivered fast</Text>
+        <Text style={styles.subtitle}>Good Food. Great Moments.</Text>
       </Animated.View>
     </View>
   );
@@ -101,41 +94,51 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 24,
   },
   glowCircle: {
-    position: 'absolute',
-    top: 30,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: '#E7F7DA',
-    opacity: 0.7,
-  },
-  scooterImage: {
-    width: width * 0.65,
-    height: width * 0.65,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: 'rgba(30, 142, 62, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  iconCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primaryDark,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 6,
   },
-  titleFood: {
-    fontSize: 38,
-    fontWeight: '800',
-    color: '#1F2937',
+  titleGrand: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
   },
-  titleIe: {
-    fontSize: 38,
-    fontWeight: '800',
-    color: Colors.primaryLight,
+  titleView: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: Colors.primary,
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#6B7280',
+    fontSize: 14,
+    color: Colors.textMuted,
     fontWeight: '500',
+    letterSpacing: 0.2,
   },
 });

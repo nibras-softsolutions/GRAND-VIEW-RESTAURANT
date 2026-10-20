@@ -19,12 +19,14 @@ import { useCart } from '../../context/CartContext';
 interface ProfileScreenProps {
   onOpenSavedAddresses: () => void;
   onOpenRoleSwitcher: () => void;
+  onNavigateToOrders: () => void;
   onLogout: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenSavedAddresses,
   onOpenRoleSwitcher,
+  onNavigateToOrders,
   onLogout,
 }) => {
   const { currentRole } = useAuth();
@@ -43,7 +45,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* User Card */}
         <View style={styles.userCard}>
-          <Image source={ReferenceAssets.userAvatar} style={styles.avatar} />
+          <Image source={ReferenceAssets.userAvatar} style={styles.avatar} resizeMode="cover" />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
               {deliveryAddress?.fullName || 'Mohammed Nibras'}
@@ -62,6 +64,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         {/* Menu Options */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account & Settings</Text>
+
+          {/* My Orders Row */}
+          <TouchableOpacity
+            style={styles.menuRow}
+            onPress={onNavigateToOrders}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.menuIcon, { backgroundColor: '#FEF3C7' }]}>
+              <Ionicons name="receipt-outline" size={20} color="#D97706" />
+            </View>
+            <View style={styles.menuDetails}>
+              <Text style={styles.menuLabel}>My Orders</Text>
+              <Text style={styles.menuSub}>Track active deliveries & cancel orders</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.menuRow}

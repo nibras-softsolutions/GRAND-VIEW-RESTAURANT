@@ -10,16 +10,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { useCart } from '../context/CartContext';
 
-export type TabType = 'home' | 'saved' | 'cart' | 'offers' | 'profile';
+export type TabType = 'home' | 'saved' | 'cart' | 'orders' | 'profile' | 'offers';
 
 interface BottomNavigationProps {
   currentTab: TabType;
   onSelectTab: (tab: TabType) => void;
+  activeOrdersCount?: number;
 }
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   currentTab,
   onSelectTab,
+  activeOrdersCount = 0,
 }) => {
   const { totalItems } = useCart();
 
@@ -48,10 +50,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       activeIcon: 'bag-handle',
     },
     {
-      id: 'offers',
-      label: 'Offers',
-      icon: 'pricetag-outline',
-      activeIcon: 'pricetag',
+      id: 'orders',
+      label: 'Orders',
+      icon: 'receipt-outline',
+      activeIcon: 'receipt',
     },
     {
       id: 'profile',
@@ -90,6 +92,13 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
                     {totalItems > 99 ? '99+' : totalItems}
+                  </Text>
+                </View>
+              )}
+              {tab.id === 'orders' && activeOrdersCount > 0 && (
+                <View style={[styles.badge, { backgroundColor: '#D97706' }]}>
+                  <Text style={styles.badgeText}>
+                    {activeOrdersCount > 9 ? '9+' : activeOrdersCount}
                   </Text>
                 </View>
               )}

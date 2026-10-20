@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SplashScreen } from './screens/SplashScreen';
@@ -8,6 +8,7 @@ import { ReferenceFoodDetailModal } from './screens/customer/ReferenceFoodDetail
 import { CartScreen } from './screens/customer/CartScreen';
 import { CheckoutScreen } from './screens/customer/CheckoutScreen';
 import { OrderTrackingScreen } from './screens/customer/OrderTrackingScreen';
+import { MyOrdersScreen } from './screens/customer/MyOrdersScreen';
 import { SavedScreen } from './screens/customer/SavedScreen';
 import { OffersScreen } from './screens/customer/OffersScreen';
 import { ProfileScreen } from './screens/customer/ProfileScreen';
@@ -19,6 +20,7 @@ import { DeliveryDetailModal } from './screens/delivery/DeliveryDetailModal';
 import { useAuth } from './context/AuthContext';
 import { Colors } from './theme/colors';
 import { Order } from './types';
+import { getLocalOrders } from './api/orders';
 
 type RootFlowState = 'splash' | 'auth' | 'app' | 'checkout' | 'tracking';
 
@@ -33,6 +35,24 @@ export const AppNavigator: React.FC = () => {
   const [activeTrackingOrderId, setActiveTrackingOrderId] = useState<string | null>(null);
   const [addressModalVisible, setAddressModalVisible] = useState(false);
   const [roleSwitcherVisible, setRoleSwitcherVisible] = useState(false);
+
+  const [activeOrdersCount, setActiveOrdersCount] = useState(0);
+
+  const refreshActiveOrders = useCallback(async () => {
+    try {
+      const orders = await getLocalOrders();
+      const active = orders.filter((o) =>
+        ['pending', 'confirmed', 'preparing', 'ready', 'ready_for_pickup', 'out_for_delivery'].includes(o.status)
+      ).length;
+      setActiveOrdersCount(active);
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshActiveOrders();
+  }, [flowState, currentTab, refreshActiveOrders]);
 
   // Delivery specific states
   const [selectedDeliveryOrder, setSelectedDeliveryOrder] = useState<Order | null>(null);
@@ -66,6 +86,7 @@ export const AppNavigator: React.FC = () => {
         onOrderPlaced={(orderId) => {
           setActiveTrackingOrderId(orderId);
           setFlowState('tracking');
+          refreshActiveOrders();
         }}
       />
     );
@@ -79,7 +100,8 @@ export const AppNavigator: React.FC = () => {
         onBackToHome={() => {
           setActiveTrackingOrderId(null);
           setFlowState('app');
-          setCurrentTab('home');
+          setCurrentTab('orders');
+          refreshActiveOrders();
         }}
       />
     );
@@ -127,13 +149,14 @@ export const AppNavigator: React.FC = () => {
             onSelectItem={(item) => setSelectedFoodItem(item)}
             onNavigateToCart={() => setCurrentTab('cart')}
             onOpenAddressSelector={() => setAddressModalVisible(true)}
-            onOpenNotifications={() => setCurrentTab('offers')}
+            onOpenNotifications={() => setCurrentTab('orders')}
           />
         )}
 
         {currentTab === 'saved' && (
           <SavedScreen
             onSelectItem={(item) => setSelectedFoodItem(item)}
+            onNavigateToHome={() => setCurrentTab('home')}
           />
         )}
 
@@ -141,6 +164,17 @@ export const AppNavigator: React.FC = () => {
           <CartScreen
             onNavigateToHome={() => setCurrentTab('home')}
             onProceedToCheckout={() => setFlowState('checkout')}
+          />
+        )}
+
+        {currentTab === 'orders' && (
+          <MyOrdersScreen
+            onNavigateToHome={() => setCurrentTab('home')}
+            onNavigateToCart={() => setCurrentTab('cart')}
+            onTrackOrder={(orderId) => {
+              setActiveTrackingOrderId(orderId);
+              setFlowState('tracking');
+            }}
           />
         )}
 
@@ -154,6 +188,7 @@ export const AppNavigator: React.FC = () => {
           <ProfileScreen
             onOpenSavedAddresses={() => setAddressModalVisible(true)}
             onOpenRoleSwitcher={() => setRoleSwitcherVisible(true)}
+            onNavigateToOrders={() => setCurrentTab('orders')}
             onLogout={() => {
               setFlowState('auth');
             }}
@@ -162,10 +197,13 @@ export const AppNavigator: React.FC = () => {
       </View>
 
       {/* Bottom Navigation */}
-      <BottomNavigation
-        currentTab={currentTab}
-        onSelectTab={setCurrentTab}
-      />
+      {currentTab !== 'cart' && (
+        <BottomNavigation
+          currentTab={currentTab}
+          onSelectTab={setCurrentTab}
+          activeOrdersCount={activeOrdersCount}
+        />
+      )}
 
       {/* Modals */}
       <ReferenceFoodDetailModal

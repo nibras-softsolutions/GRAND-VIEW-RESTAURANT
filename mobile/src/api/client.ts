@@ -4,29 +4,24 @@ import { Platform } from 'react-native';
 const STORAGE_KEYS = {
   API_URL: 'gvr_api_url',
   DELIVERY_TOKEN: 'gvr_delivery_token',
+  CUSTOMER_TOKEN: 'gvr_customer_token',
 };
 
-// Default backend URL:
-// On Android emulator: 10.0.2.2 points to host machine localhost:3000
-// On iOS simulator: localhost:3000
-// On real physical devices or production: https://grand-view-restaurant.vercel.app
-const DEFAULT_API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === 'android'
-    ? 'http://10.0.2.2:3000'
-    : 'http://localhost:3000');
-
-// Fallback production URL if local dev server cannot be reached
+// Authoritative production backend URL connecting directly to Neon database
 export const PRODUCTION_API_URL = 'https://grand-view-restaurant.vercel.app';
+
+const DEFAULT_API_URL = process.env.EXPO_PUBLIC_API_URL || PRODUCTION_API_URL;
 
 let cachedApiUrl: string | null = null;
 let cachedDeliveryToken: string | null = null;
+let cachedCustomerToken: string | null = null;
 
 export async function getApiBaseUrl(): Promise<string> {
   if (cachedApiUrl) return cachedApiUrl;
   try {
     const saved = await AsyncStorage.getItem(STORAGE_KEYS.API_URL);
-    if (saved) {
+    // Ignore legacy localhost URLs on physical devices
+    if (saved && !saved.includes('localhost') && !saved.includes('10.0.2.2')) {
       cachedApiUrl = saved;
       return saved;
     }
@@ -41,6 +36,26 @@ export async function setApiBaseUrl(url: string): Promise<void> {
   const cleanUrl = url.trim().replace(/\/$/, '');
   cachedApiUrl = cleanUrl;
   await AsyncStorage.setItem(STORAGE_KEYS.API_URL, cleanUrl);
+}
+
+export async function getCustomerToken(): Promise<string | null> {
+  if (cachedCustomerToken) return cachedCustomerToken;
+  try {
+    const token = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOMER_TOKEN);
+    cachedCustomerToken = token;
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+export async function setCustomerToken(token: string | null): Promise<void> {
+  cachedCustomerToken = token;
+  if (token) {
+    await AsyncStorage.setItem(STORAGE_KEYS.CUSTOMER_TOKEN, token);
+  } else {
+    await AsyncStorage.removeItem(STORAGE_KEYS.CUSTOMER_TOKEN);
+  }
 }
 
 export async function getDeliveryToken(): Promise<string | null> {
@@ -73,6 +88,7 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const baseUrl = await getApiBaseUrl();
   const token = await getDeliveryToken();
+  const customerToken = await getCustomerToken();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -80,7 +96,10 @@ export async function apiRequest<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
+  if (customerToken) {
+    headers['Authorization'] = `Bearer ${customerToken}`;
+    headers['x-customer-token'] = customerToken;
+  } else if (token) {
     headers['Authorization'] = `Bearer ${token}`;
     headers['x-delivery-session'] = token;
   }
