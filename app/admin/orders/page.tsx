@@ -23,9 +23,9 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
       const url = statusFilter === 'all'
         ? `/api/admin/orders?limit=100&search=${encodeURIComponent(searchQuery)}`
         : `/api/admin/orders?limit=100&status=${statusFilter}&search=${encodeURIComponent(searchQuery)}`;
@@ -38,13 +38,17 @@ export default function AdminOrdersPage() {
     } catch (e) {
       console.error('Failed to fetch admin orders', e);
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, [statusFilter]);
+    fetchOrders(false);
+    const interval = setInterval(() => {
+      fetchOrders(true);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [statusFilter, searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +110,7 @@ export default function AdminOrdersPage() {
     { label: 'Ready', value: 'ready' },
     { label: 'Out for Delivery', value: 'out_for_delivery' },
     { label: 'Delivered', value: 'delivered' },
+    { label: 'Cancelled', value: 'cancelled' },
     { label: 'Rejected', value: 'rejected' },
   ];
 
@@ -138,7 +143,7 @@ export default function AdminOrdersPage() {
           </form>
 
           <button
-            onClick={fetchOrders}
+            onClick={() => fetchOrders(false)}
             className="p-2 rounded-xl bg-white border border-[#E6E1D5] text-[#77736C] hover:text-[#1A1814] transition-colors cursor-pointer"
             title="Refresh Orders"
           >

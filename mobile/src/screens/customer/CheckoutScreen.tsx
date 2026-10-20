@@ -123,50 +123,9 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
       const msg = err.message || 'Unable to connect to Grand View servers. Please check your network connection.';
       setErrorMsg(msg);
       Alert.alert(
-        'Order Placement Error',
-        `${msg}\n\nWould you like to save this order for local tracking and call the restaurant hotline?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Save & Call Hotline',
-            onPress: async () => {
-              const offlineOrderId = `GV-${Math.floor(1000 + Math.random() * 9000)}`;
-              const offlineOrder: any = {
-                id: offlineOrderId,
-                createdAt: 'Just now',
-                items: cart,
-                subtotal,
-                deliveryCharge: deliveryFee,
-                tax: 0,
-                total,
-                orderType,
-                deliveryAddress: `${houseName}, ${locality}, ${island} (Landmark: ${landmark})`,
-                island,
-                houseName,
-                locality,
-                landmark,
-                deliveryInstructions: instructions,
-                customerName: fullName,
-                phone,
-                paymentMethod,
-                status: 'pending',
-                estimatedTime: '25–35 mins',
-                timeline: [
-                  {
-                    status: 'pending',
-                    title: 'Order Placed (Local)',
-                    description: 'Your order was saved locally on device.',
-                    completed: true,
-                    time: 'Just now',
-                  },
-                ],
-              };
-              await saveOrderLocally(offlineOrder);
-              clearCart();
-              onOrderPlaced(offlineOrderId);
-            },
-          },
-        ]
+        'Order Failed',
+        msg,
+        [{ text: 'OK', style: 'default' }]
       );
     } finally {
       setSubmitting(false);
