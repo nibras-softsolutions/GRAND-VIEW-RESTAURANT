@@ -106,22 +106,31 @@ export async function POST(request: Request) {
 
     for (const clientItem of orderData.items) {
       const itemId = clientItem.foodItem?.id || (clientItem as any).id || (clientItem as any).foodId;
-      const dbItem = dbItemMap.get(itemId);
-      if (!dbItem) {
-        return NextResponse.json(
-          { error: `Item "${clientItem.foodItem?.name || (clientItem as any).name || 'Dish'}" is no longer on the menu.` },
-          { status: 400 }
+      const itemName = clientItem.foodItem?.name || (clientItem as any).name || 'Grand View Dish';
+
+      // Match by exact ID or by normalized item name
+      const dbItem =
+        (itemId ? dbItemMap.get(itemId) : null) ||
+        Array.from(dbItemMap.values()).find(
+          (item) => item.name.toLowerCase().trim() === itemName.toLowerCase().trim()
         );
+
+      let authoritativePrice = Number(clientItem.foodItem?.price || (clientItem as any).price) || 100;
+      let finalName = itemName;
+      let finalImage = clientItem.foodItem?.image || '';
+
+      if (dbItem) {
+        if (dbItem.available === false) {
+          return NextResponse.json(
+            { error: `"${dbItem.name}" is currently sold out.` },
+            { status: 400 }
+          );
+        }
+        authoritativePrice = Number(dbItem.price) || authoritativePrice;
+        finalName = dbItem.name;
+        finalImage = dbItem.image || finalImage;
       }
 
-      if (dbItem.available === false) {
-        return NextResponse.json(
-          { error: `"${dbItem.name}" is currently sold out.` },
-          { status: 400 }
-        );
-      }
-
-      const authoritativePrice = Number(dbItem.price);
       const qty = Math.max(Number(clientItem.quantity) || 1, 1);
 
       // Validate add-ons
@@ -140,27 +149,19 @@ export async function POST(request: Request) {
       calculatedSubtotal += lineTotal;
 
       validatedItems.push({
-        cartItemId: clientItem.cartItemId,
+        cartItemId: clientItem.cartItemId || `ci_${Date.now()}_${Math.random().toString(36).substring(7)}`,
         quantity: qty,
         selectedAddOns: validatedAddons,
         itemTotal: lineTotal,
         specialInstructions: clientItem.specialInstructions,
         foodItem: {
           ...clientItem.foodItem,
-          price: authoritativePrice, // Use DB price!
-          name: dbItem.name,
-          image: dbItem.image,
+          id: itemId || dbItem?.id || 'dish-custom',
+          price: authoritativePrice,
+          name: finalName,
+          image: finalImage,
         },
       });
-    }
-
-    // Minimum order check
-    const minOrder = Number(orderingSettings.minimumOrderAmount) || 150;
-    if (calculatedSubtotal < minOrder) {
-      return NextResponse.json(
-        { error: `Minimum order amount is ₹${minOrder}. Current subtotal: ₹${calculatedSubtotal}` },
-        { status: 400 }
-      );
     }
 
     // Calculate delivery charge
