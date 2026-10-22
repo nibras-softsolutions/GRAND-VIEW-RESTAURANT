@@ -42,7 +42,7 @@ export default function Footer() {
           <div className="flex items-center gap-4">
             <a
               href="#instagram"
-              aria-label="Grand View Restaurant on Instagram"
+              aria-label="Alfiya Kitchen on Instagram"
               className="w-9 h-9 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-[#D8B46A] hover:bg-[#B98A3E] hover:text-white transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@ export default function Footer() {
             </a>
             <a
               href="#facebook"
-              aria-label="Grand View Restaurant on Facebook"
+              aria-label="Alfiya Kitchen on Facebook"
               className="w-9 h-9 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-[#D8B46A] hover:bg-[#B98A3E] hover:text-white transition-all"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@ export default function Footer() {
             </a>
             <a
               href="#youtube"
-              aria-label="Grand View Restaurant on YouTube"
+              aria-label="Alfiya Kitchen on YouTube"
               className="w-9 h-9 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-[#D8B46A] hover:bg-[#B98A3E] hover:text-white transition-all"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -74,7 +74,7 @@ export default function Footer() {
 
         {/* Bottom copyright */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-[#77736C]">
-          <p>© {new Date().getFullYear()} Grand View Restaurant. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Alfiya Kitchen. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/menu" className="hover:text-[#D8B46A]">Menu</Link>
             <Link href="/orders" className="hover:text-[#D8B46A]">Track Order</Link>

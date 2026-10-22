@@ -33,7 +33,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   const imageUri = item.image && item.image.startsWith('http')
     ? item.image
     : item.image && item.image.startsWith('/')
-    ? `https://grand-view-restaurant.vercel.app${item.image}`
+    ? `https://alfiya-kitchen.vercel.app${item.image}`
     : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
 
   if (layout === 'row') {
@@ -165,7 +165,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
         </Text>
 
         <Text style={styles.description} numberOfLines={2}>
-          {item.description || 'Prepared fresh with Grand View culinary herbs & spices.'}
+          {item.description || 'Prepared fresh with Alfiya Kitchen culinary herbs & spices.'}
         </Text>
 
         <View style={styles.cardFooter}>

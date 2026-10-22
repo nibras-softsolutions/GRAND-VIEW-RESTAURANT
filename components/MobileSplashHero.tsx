@@ -16,7 +16,7 @@ export default function MobileSplashHero({ onDismiss }: MobileSplashHeroProps) {
       {/* Background Photography with Luxury Dark Overlay */}
       <Image
         src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80"
-        alt="Grand View Restaurant Lakshadweep"
+        alt="Alfiya Kitchen Lakshadweep"
         fill
         className="object-cover"
         priority

@@ -4,8 +4,8 @@ import { getAdminSession } from '@/lib/auth';
 import AdminLayoutClient from '@/components/admin/AdminLayoutClient';
 
 export const metadata: Metadata = {
-  title: 'Grand View Restaurant — Management Portal',
-  description: 'Secure, dynamic restaurant management console for Grand View Restaurant.',
+  title: 'Alfiya Kitchen — Management Portal',
+  description: 'Secure, dynamic restaurant management console for Alfiya Kitchen.',
   robots: { index: false, follow: false },
 };
 

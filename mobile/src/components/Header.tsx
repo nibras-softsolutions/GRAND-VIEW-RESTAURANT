@@ -57,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
             </View>
             <View>
               <Text style={styles.brandTitle}>
-                {title || 'Grand View'}
+                {title || 'Alfiya Kitchen'}
               </Text>
               <Text style={styles.brandTagline}>
                 {subtitle || (currentRole === 'delivery' ? 'Delivery Partner Portal' : 'Good Food. Great Moments.')}

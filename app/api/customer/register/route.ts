@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const cleanPhone = phone.trim();
-    const cleanEmail = email ? email.trim().toLowerCase() : `${cleanPhone.replace(/\D/g, '')}@grandview.local`;
+    const cleanEmail = email ? email.trim().toLowerCase() : `${cleanPhone.replace(/\D/g, '')}@alfiyakitchen.local`;
     const cleanIsland = island || 'Amini';
     const cleanHouse = houseName || '';
 

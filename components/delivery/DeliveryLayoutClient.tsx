@@ -44,7 +44,7 @@ export default function DeliveryLayoutClient({
             </div>
             <div>
               <p className="font-serif text-sm font-bold text-white tracking-wide">
-                Grand View Deliveries
+                Alfiya Kitchen Deliveries
               </p>
               <p className="text-[10px] text-[#A0988C]">
                 {deliveryPerson?.name || 'Delivery Partner'} {deliveryPerson?.vehicleInfo ? `• ${deliveryPerson.vehicleInfo}` : ''}

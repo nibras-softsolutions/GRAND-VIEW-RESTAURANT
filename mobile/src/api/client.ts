@@ -8,7 +8,7 @@ const STORAGE_KEYS = {
 };
 
 // Authoritative production backend URL connecting directly to Neon database
-export const PRODUCTION_API_URL = 'https://grand-view-restaurant.vercel.app';
+export const PRODUCTION_API_URL = 'https://alfiya-kitchen.vercel.app';
 
 const DEFAULT_API_URL = process.env.EXPO_PUBLIC_API_URL || PRODUCTION_API_URL;
 
@@ -149,7 +149,7 @@ export async function apiRequest<T>(
         }
         return fallbackData as T;
       } catch (fallbackErr) {
-        throw new Error('Unable to connect to Grand View Restaurant servers. Please check your internet connection.');
+        throw new Error('Unable to connect to Alfiya Kitchen servers. Please check your internet connection.');
       }
     }
 

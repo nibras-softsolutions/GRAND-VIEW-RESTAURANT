@@ -154,7 +154,7 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     const formattedAddress = isPickup
-      ? 'Grand View Restaurant (Front Counter Pickup)'
+      ? 'Alfiya Kitchen (Front Counter Pickup)'
       : `${houseName.trim()}, ${locality.trim()}, ${island}, Lakshadweep`;
 
     try {
@@ -229,7 +229,7 @@ export default function CheckoutPage() {
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1814]">
               Checkout
             </h1>
-            <p className="text-xs text-[#77736C]">Grand View Restaurant • Lakshadweep</p>
+            <p className="text-xs text-[#77736C]">Alfiya Kitchen • Lakshadweep</p>
           </div>
         </div>
 

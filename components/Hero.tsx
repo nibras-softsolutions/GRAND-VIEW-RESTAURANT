@@ -78,7 +78,7 @@ export default function Hero() {
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl border border-[#C99A4A]/30 group">
                 <Image
                   src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80"
-                  alt="Grand View Gourmet Dining Experience"
+                  alt="Alfiya Kitchen Gourmet Dining Experience"
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 1280px) 50vw, 600px"

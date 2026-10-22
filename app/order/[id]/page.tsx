@@ -54,7 +54,7 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
       status: 'confirmed' as OrderStatus,
       estimatedTime: '25–30 mins',
       timeline: [
-        { status: 'confirmed' as OrderStatus, title: 'Order Confirmed', description: 'Received and confirmed by Grand View Restaurant.', completed: true, time: 'Just now' },
+        { status: 'confirmed' as OrderStatus, title: 'Order Confirmed', description: 'Received and confirmed by Alfiya Kitchen.', completed: true, time: 'Just now' },
         { status: 'preparing' as OrderStatus, title: 'Preparing in Kitchen', description: 'Chefs are cooking your meal fresh.', completed: false },
         { status: 'out_for_delivery' as OrderStatus, title: 'Out for Delivery', description: 'Delivery partner on the way to your address.', completed: false },
         { status: 'delivered' as OrderStatus, title: 'Delivered', description: 'Delivered to your doorstep.', completed: false },
@@ -126,7 +126,7 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
                 Track Order
               </h1>
               <p className="text-xs text-[#77736C]">
-                {order.id} • {order.island ? `${order.island} Island` : 'Grand View Restaurant'}
+                {order.id} • {order.island ? `${order.island} Island` : 'Alfiya Kitchen'}
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
                 </div>
                 <div>
                   <h4 className="font-serif text-sm font-bold text-[#1A1814]">
-                    {order.deliveryPersonName || 'Grand View Delivery Partner'}
+                    {order.deliveryPersonName || 'Alfiya Kitchen Delivery Partner'}
                   </h4>
                   <p className="text-[11px] text-[#77736C]">
                     {order.deliveryPersonName ? 'Assigned Delivery Partner' : 'Assigning driver upon dispatch'}
@@ -258,7 +258,7 @@ export default function OrderTrackPage({ params }: OrderTrackPageProps) {
 
           {isPickup ? (
             <p className="font-medium text-[#1A1814]">
-              Front Counter Pickup at Grand View Restaurant
+              Front Counter Pickup at Alfiya Kitchen
             </p>
           ) : (
             <div className="space-y-1 text-[#1A1814]">

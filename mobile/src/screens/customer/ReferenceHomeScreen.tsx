@@ -37,7 +37,7 @@ export const ReferenceHomeScreen: React.FC<ReferenceHomeScreenProps> = ({
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
 
-  // Categories matching live Grand View Restaurant categories + popular tags
+  // Categories matching live Alfiya Kitchen categories + popular tags
   const categories = [
     { id: 'All', name: 'All', asset: null, isAll: true },
     { id: 'Starters', name: 'Starters', asset: CleanAssets.catStarters },
@@ -50,7 +50,7 @@ export const ReferenceHomeScreen: React.FC<ReferenceHomeScreenProps> = ({
     { id: 'Pizza', name: 'Pizza', asset: CleanAssets.catPizza },
   ];
 
-  // Best Sellers with real, standalone clean food photography from Grand View Restaurant
+  // Best Sellers with real, standalone clean food photography from Alfiya Kitchen
   const bestSellers = [
     {
       id: 'butter-chicken',
@@ -174,7 +174,7 @@ export const ReferenceHomeScreen: React.FC<ReferenceHomeScreenProps> = ({
     },
     {
       id: 'dal-makhani',
-      name: 'Dal Makhani Grand View',
+      name: 'Dal Makhani Alfiya Kitchen',
       price: 220,
       category: 'Main Course',
       calories: 420,

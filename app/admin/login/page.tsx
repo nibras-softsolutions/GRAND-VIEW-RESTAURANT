@@ -67,7 +67,7 @@ function AdminLoginForm() {
             Admin Portal
           </h1>
           <p className="text-xs text-[#D1C9BE] mt-1">
-            Secure management console for Grand View Restaurant
+            Secure management console for Alfiya Kitchen
           </p>
         </div>
 
@@ -92,7 +92,7 @@ function AdminLoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@grandview.com"
+                placeholder="name@alfiyakitchen.com"
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#25221E] border border-white/10 text-sm text-white placeholder-[#77736C] focus:outline-hidden focus:border-[#C99A4A] transition-colors"
               />
             </div>
@@ -151,7 +151,7 @@ function AdminLoginForm() {
           <div className="grid grid-cols-3 gap-2 text-[11px]">
             <button
               type="button"
-              onClick={() => handleQuickFill('admin@grandview.com', 'GrandView@2026')}
+              onClick={() => handleQuickFill('admin@alfiyakitchen.com', 'Alfiya@2026')}
               className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-[#C99A4A] text-left transition-colors"
             >
               <p className="font-bold text-white truncate">Super Admin</p>
@@ -160,7 +160,7 @@ function AdminLoginForm() {
 
             <button
               type="button"
-              onClick={() => handleQuickFill('manager@grandview.com', 'Manager@2026')}
+              onClick={() => handleQuickFill('manager@alfiyakitchen.com', 'Manager@2026')}
               className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-[#C99A4A] text-left transition-colors"
             >
               <p className="font-bold text-white truncate">Manager</p>
@@ -169,7 +169,7 @@ function AdminLoginForm() {
 
             <button
               type="button"
-              onClick={() => handleQuickFill('staff@grandview.com', 'Staff@2026')}
+              onClick={() => handleQuickFill('staff@alfiyakitchen.com', 'Staff@2026')}
               className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-[#C99A4A] text-left transition-colors"
             >
               <p className="font-bold text-white truncate">Staff</p>

@@ -35,7 +35,7 @@ function OrderSuccessContent() {
         Order Placed!
       </h1>
       <p className="text-xs sm:text-sm text-[#77736C] mb-6">
-        Thank you for ordering from Grand View Restaurant.
+        Thank you for ordering from Alfiya Kitchen.
       </p>
 
       {/* Order Info Card matching Screen 7 */}
@@ -101,7 +101,7 @@ function OrderSuccessContent() {
           </svg>
         </div>
         <p className="font-serif text-xs sm:text-sm font-bold text-[#1A1814]">
-          Thank you for choosing Grand View Restaurant
+          Thank you for choosing Alfiya Kitchen
         </p>
 
         {/* Small golden lotus mark */}

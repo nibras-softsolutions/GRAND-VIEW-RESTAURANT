@@ -59,7 +59,7 @@ export const CartScreen: React.FC<CartScreenProps> = ({
         </View>
         <Text style={styles.emptyTitle}>Your cart is empty</Text>
         <Text style={styles.emptySubtitle}>
-          Explore delicious dishes, biryanis, and refreshing drinks from Grand View Restaurant.
+          Explore delicious dishes, biryanis, and refreshing drinks from Alfiya Kitchen.
         </Text>
         <TouchableOpacity
           style={styles.browseBtn}

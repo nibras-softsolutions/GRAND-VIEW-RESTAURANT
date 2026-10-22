@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Grand View Restaurant",
-    "slug": "grand-view-restaurant",
+    "name": "Alfiya Kitchen",
+    "slug": "alfiya-kitchen",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,13 +15,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.grandviewrestaurant.app",
+      "bundleIdentifier": "com.alfiyakitchenrestaurant.app",
       "infoPlist": {
         "UIRequiresFullScreen": true
       }
     },
     "android": {
-      "package": "com.grandviewrestaurant.app",
+      "package": "com.alfiyakitchenrestaurant.app",
       "adaptiveIcon": {
         "backgroundColor": "#F8F6F1",
         "foregroundImage": "./assets/android-icon-foreground.png"
@@ -32,9 +32,9 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "restaurantName": "Grand View Restaurant",
+      "restaurantName": "Alfiya Kitchen",
       "tagline": "Good Food. Great Moments.",
-      "defaultApiUrl": "https://grand-view-restaurant.vercel.app"
+      "defaultApiUrl": "https://alfiya-kitchen.vercel.app"
     }
   }
 }

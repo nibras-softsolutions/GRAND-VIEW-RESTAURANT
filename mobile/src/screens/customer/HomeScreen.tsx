@@ -92,7 +92,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <Ionicons name="sparkles" size={13} color={Colors.primaryDark} />
             <Text style={styles.heroTagText}>Island Gastronomy</Text>
           </View>
-          <Text style={styles.heroTitle}>Grand View Restaurant</Text>
+          <Text style={styles.heroTitle}>Alfiya Kitchen</Text>
           <Text style={styles.heroSubtitle}>Good Food. Great Moments.</Text>
           <Text style={styles.heroDescription}>
             Authentic coastal delicacies, aromatic biriyanis, and freshly prepared island favorites delivered to your door.

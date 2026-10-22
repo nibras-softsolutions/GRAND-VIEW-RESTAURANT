@@ -165,7 +165,7 @@ export const MENU_ITEMS: FoodItem[] = [
   },
   {
     id: 'dal-makhani',
-    name: 'Dal Makhani Grand View',
+    name: 'Dal Makhani Alfiya Special',
     category: 'Main Course',
     description: 'Creamy black lentils and kidney beans slow-simmered overnight for 16 hours on charcoal hearths, finished with churned white butter and clotted cream.',
     price: 200,
@@ -412,7 +412,7 @@ export const MENU_ITEMS: FoodItem[] = [
   },
   {
     id: 'classic-tiramisu',
-    name: 'Grand View Classic Tiramisu',
+    name: 'Alfiya Kitchen Classic Tiramisu',
     category: 'Desserts',
     description: 'Imported Italian savoiardi ladyfingers dipped in freshly pulled espresso, layered with whipped Galbani mascarpone and dusted with Dutch cocoa.',
     price: 250,
@@ -509,7 +509,7 @@ export const MENU_ITEMS: FoodItem[] = [
   },
   {
     id: 'masala-chai-pot',
-    name: 'Grand View Masala Chai Pot',
+    name: 'Alfiya Kitchen Masala Chai Pot',
     category: 'Beverages',
     description: 'CTC Assam black tea leaves brewed with crushed green cardamom, ginger root, cinnamon bark, cloves, and whole cream milk. Served in a teapot with butter cookies.',
     price: 110,
@@ -659,13 +659,13 @@ export const MENU_ITEMS: FoodItem[] = [
 ];
 
 export const RESTAURANT_INFO = {
-  name: 'Grand View Restaurant',
+  name: 'Alfiya Kitchen',
   tagline: 'Good Food. Great Moments.',
   supporting: 'Fresh ingredients. Authentic flavours. Exceptional taste.',
   location: 'Main Road, Amini, Lakshadweep',
   address: 'Main Road, Near Old Jetty, Amini, Lakshadweep - 682559',
   phone: '+91 94473 45678',
-  email: 'orders@grandviewrestaurant.com',
+  email: 'orders@alfiyakitchen.com',
   openingHours: '11:00 AM – 11:00 PM (Daily)',
   deliveryTime: '30–35 mins',
   pickupTime: '15–20 mins',

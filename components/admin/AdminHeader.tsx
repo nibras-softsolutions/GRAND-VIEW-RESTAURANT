@@ -109,7 +109,7 @@ export default function AdminHeader({ onMenuClick, user }: AdminHeaderProps) {
             {getPageTitle(pathname)}
           </h1>
           <p className="hidden sm:block text-[11px] text-[#77736C]">
-            Grand View Restaurant • Management Portal
+            Alfiya Kitchen • Management Portal
           </p>
         </div>
       </div>

@@ -22,10 +22,10 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Grand View Restaurant — Online Food Ordering & Delivery",
-  description: "Good Food. Great Moments. Signature gourmet dishes and authentic flavours prepared fresh and delivered to your doorstep by Grand View Restaurant.",
-  keywords: ["Grand View Restaurant", "Online Food Ordering", "Gourmet Food Delivery", "Takeaway Pickup", "Kochi Dining"],
-  authors: [{ name: "Grand View Restaurant" }],
+  title: "Alfiya Kitchen — Online Food Ordering & Delivery",
+  description: "Good Food. Great Moments. Signature gourmet dishes and authentic flavours prepared fresh and delivered to your doorstep by Alfiya Kitchen.",
+  keywords: ["Alfiya Kitchen", "Online Food Ordering", "Gourmet Food Delivery", "Takeaway Pickup", "Lakshadweep Dining"],
+  authors: [{ name: "Alfiya Kitchen" }],
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },

@@ -61,7 +61,7 @@ const STORAGE_KEYS = {
 const DEFAULT_CUSTOMER_INFO: CustomerInfo = {
   name: 'Mohammed Nibras',
   phone: '+91 94472 00000',
-  email: 'nibras@grandview.in',
+  email: 'nibras@alfiyakitchen.in',
   island: 'Amini',
   houseName: 'Baitul Noor',
   locality: 'Near Juma Masjid',
@@ -270,7 +270,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const applyCoupon = (code: string) => {
     const normalized = code.trim().toUpperCase();
-    if (normalized === 'FOODIE30' || normalized === 'FREESHIP' || normalized === 'GRANDVIEW') {
+    if (normalized === 'FOODIE30' || normalized === 'FREESHIP' || normalized === 'alfiyakitchen') {
       setCouponCode(normalized);
       AsyncStorage.setItem(STORAGE_KEYS.COUPON, normalized).catch(() => {});
       return true;
@@ -295,7 +295,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   let discountAmount = 0;
   if (couponCode === 'FOODIE30' && subtotal > 0) {
     discountAmount = Math.min(subtotal * 0.3, 6.0);
-  } else if (couponCode === 'GRANDVIEW' && subtotal >= 10) {
+  } else if (couponCode === 'alfiyakitchen' && subtotal >= 10) {
     discountAmount = 5.0;
   }
 

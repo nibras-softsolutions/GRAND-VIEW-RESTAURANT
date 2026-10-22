@@ -35,7 +35,7 @@ export const OffersScreen: React.FC<OffersScreenProps> = ({ onNavigateToCart }) 
       color: Colors.primary,
     },
     {
-      code: 'GRANDVIEW',
+      code: 'alfiyakitchen',
       title: '$5 Off Special Welcome',
       desc: 'Exclusive discount for customers celebrating island culinary heritage.',
       expiry: 'Ongoing',

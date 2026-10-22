@@ -424,7 +424,7 @@ export default function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
             {isPickup ? (
               <div className="text-xs text-[#1A1814] flex items-center gap-2">
                 <Store className="w-4 h-4 text-[#C99A4A]" />
-                <span>Front Counter Pickup at Grand View Restaurant</span>
+                <span>Front Counter Pickup at Alfiya Kitchen</span>
               </div>
             ) : (
               <div className="text-xs space-y-2 text-[#1A1814]">

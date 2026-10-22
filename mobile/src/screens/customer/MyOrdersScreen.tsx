@@ -352,7 +352,7 @@ export const MyOrdersScreen: React.FC<MyOrdersScreenProps> = ({
             </Text>
             <Text style={styles.emptySubtitle}>
               {activeFilter === 'all'
-                ? 'Taste our royal biryanis, gravies, and beverages cooked fresh daily at Grand View.'
+                ? 'Taste our royal biryanis, gravies, and beverages cooked fresh daily at Alfiya Kitchen.'
                 : `You currently do not have any orders under the "${activeFilter}" category.`}
             </Text>
             <TouchableOpacity
@@ -405,7 +405,7 @@ export const MyOrdersScreen: React.FC<MyOrdersScreenProps> = ({
                       <View key={idx} style={styles.orderItemLine}>
                         <Text style={styles.itemQty}>{it.quantity || 1}x</Text>
                         <Text style={styles.itemName} numberOfLines={1}>
-                          {it.foodItem?.name || 'Grand View Dish'}
+                          {it.foodItem?.name || 'Alfiya Kitchen Dish'}
                         </Text>
                         <Text style={styles.itemPrice}>
                           ₹{(it.itemTotal || it.foodItem?.price || 0).toFixed(2)}
@@ -413,7 +413,7 @@ export const MyOrdersScreen: React.FC<MyOrdersScreenProps> = ({
                       </View>
                     ))
                   ) : (
-                    <Text style={styles.itemFallback}>Grand View Signature Meal</Text>
+                    <Text style={styles.itemFallback}>Alfiya Kitchen Signature Meal</Text>
                   )}
                 </View>
 

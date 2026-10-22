@@ -161,7 +161,7 @@ export default function AdminNewMenuItemPage() {
               Add New Dish
             </h2>
             <p className="text-xs text-[#77736C]">
-              Create a signature culinary item for Grand View Restaurant
+              Create a signature culinary item for Alfiya Kitchen
             </p>
           </div>
         </div>

@@ -60,7 +60,7 @@ export const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
     item.image && item.image.startsWith('http')
       ? item.image
       : item.image && item.image.startsWith('/')
-      ? `https://grand-view-restaurant.vercel.app${item.image}`
+      ? `https://alfiya-kitchen.vercel.app${item.image}`
       : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
 
   return (

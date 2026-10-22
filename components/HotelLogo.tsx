@@ -23,7 +23,7 @@ export default function RestaurantLogo({
     <Link
       href="/"
       className={`inline-flex flex-col items-center select-none group transition-opacity hover:opacity-90 ${className}`}
-      aria-label="Grand View Restaurant Home"
+      aria-label="Alfiya Kitchen Home"
     >
       <div className="flex items-center gap-2">
         {/* Luxury Lotus / Crown Emblem */}
@@ -67,14 +67,14 @@ export default function RestaurantLogo({
                 : 'text-sm md:text-[15px]'
             } ${isLight ? 'text-white' : 'text-[#1A1814]'}`}
           >
-            Grand View
+            Alfiya
           </span>
           <span
             className={`font-sans tracking-[0.3em] uppercase text-[8px] font-semibold leading-none ${
               isLight ? 'text-[#E5C07B]' : 'text-[#C99A4A]'
             }`}
           >
-            Restaurant
+            Kitchen
           </span>
         </div>
       </div>

@@ -122,7 +122,7 @@ export default function ProfilePage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#E5C07B]">
-                  Grand View Club Member
+                  Alfiya Kitchen Club Member
                 </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               </div>

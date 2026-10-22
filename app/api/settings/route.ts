@@ -16,7 +16,7 @@ export async function GET() {
     return NextResponse.json({
       settings: settingsMap,
       general: settingsMap.general || {
-        name: 'Grand View Restaurant',
+        name: 'Alfiya Kitchen',
         tagline: 'Good Food. Great Moments.',
         isOpen: true,
         phone: '+91 98765 43210',

@@ -120,7 +120,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
       }
     } catch (err: any) {
       console.error('Order placement failed:', err);
-      const msg = err.message || 'Unable to connect to Grand View servers. Please check your network connection.';
+      const msg = err.message || 'Unable to connect to Alfiya Kitchen servers. Please check your network connection.';
       setErrorMsg(msg);
       Alert.alert(
         'Order Failed',
@@ -163,7 +163,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({
             <Text style={styles.cardTitle}>Delivery Address (No GPS)</Text>
           </View>
           <Text style={styles.addressNotice}>
-            Grand View delivers directly using your island, house name, and landmark.
+            Alfiya Kitchen delivers directly using your island, house name, and landmark.
           </Text>
 
           <View style={styles.formRow}>

@@ -186,7 +186,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
         setLoading(false);
         Alert.alert(
           'Account Created',
-          `Welcome to Grand View Restaurant, ${res.customer.name}!`,
+          `Welcome to Alfiya Kitchen, ${res.customer.name}!`,
           [{ text: 'Start Ordering', onPress: onLoginSuccess }]
         );
       } else {
@@ -217,7 +217,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
         {/* Top Header Card */}
         <View style={styles.heroContainer}>
           <View style={styles.heroLeft}>
-            <Text style={styles.restaurantBrand}>Grand View</Text>
+            <Text style={styles.restaurantBrand}>Alfiya Kitchen</Text>
             <Text style={styles.restaurantTagline}>Good Food. Great Moments.</Text>
             <Text style={styles.heroIslandNotice}>Lakshadweep Island Delivery</Text>
           </View>
@@ -360,7 +360,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
         {activeTab === 'register' && (
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>Create Account</Text>
-            <Text style={styles.formSubtitle}>Join Grand View for fast Lakshadweep delivery</Text>
+            <Text style={styles.formSubtitle}>Join Alfiya Kitchen for fast Lakshadweep delivery</Text>
 
             {/* Full Name */}
             <View style={styles.inputGroup}>

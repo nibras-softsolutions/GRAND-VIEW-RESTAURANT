@@ -1,5 +1,5 @@
 // Clean, high-resolution independent food photography & UI assets
-// Derived from live Grand View Restaurant menu & high-res photography
+// Derived from live Alfiya Kitchen menu & high-res photography
 // 100% decoupled from any video reference screenshot
 
 export const CleanAssets = {
@@ -9,7 +9,7 @@ export const CleanAssets = {
   feastBanner: require('../../assets/clean/feast_banner.jpg'),
   gourmetDiningHero: require('../../assets/clean/gourmet_dining_hero.jpg'),
 
-  // Live Grand View Restaurant Categories
+  // Live Alfiya Kitchen Categories
   catStarters: require('../../assets/clean/cat_starters.jpg'),
   catMainCourse: require('../../assets/clean/cat_maincourse.jpg'),
   catBeverages: require('../../assets/clean/cat_beverages.jpg'),
@@ -28,7 +28,7 @@ export const CleanAssets = {
   catDessert: require('../../assets/clean/cat_dessert.jpg'),
   catDrinks: require('../../assets/clean/cat_drinks.jpg'),
 
-  // Live Grand View Restaurant Menu Signature Dishes
+  // Live Alfiya Kitchen Menu Signature Dishes
   dishButterChicken: require('../../assets/clean/dish_butter_chicken.jpg'),
   dishBiryani: require('../../assets/clean/dish_biryani.jpg'),
   dishChickenTikka: require('../../assets/clean/dish_chicken_tikka.jpg'),

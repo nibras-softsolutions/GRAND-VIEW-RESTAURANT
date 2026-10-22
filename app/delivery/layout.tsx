@@ -4,8 +4,8 @@ import { getDeliverySession } from '@/lib/auth';
 import DeliveryLayoutClient from '@/components/delivery/DeliveryLayoutClient';
 
 export const metadata: Metadata = {
-  title: 'Grand View Restaurant — Delivery Partner Portal',
-  description: 'Mobile delivery console for Grand View Restaurant delivery partners in Lakshadweep.',
+  title: 'Alfiya Kitchen — Delivery Partner Portal',
+  description: 'Mobile delivery console for Alfiya Kitchen delivery partners in Lakshadweep.',
   robots: { index: false, follow: false },
 };
 

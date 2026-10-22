@@ -159,7 +159,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
     const customerName = data.customerName || 'Mohammed Shafi';
     const address = isPickup
-      ? 'Grand View Restaurant (Front Counter Pickup)'
+      ? 'Alfiya Kitchen (Front Counter Pickup)'
       : data.deliveryAddress || `${data.houseName || ''}, ${data.locality || ''}, ${data.island || 'Amini'}`;
 
     const newOrder: Order = {
@@ -188,7 +188,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
             {
               status: 'confirmed',
               title: 'Order Confirmed',
-              description: 'Your order has been received and verified by Grand View Restaurant.',
+              description: 'Your order has been received and verified by Alfiya Kitchen.',
               completed: true,
               current: true,
               time: timeStr,
@@ -203,7 +203,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
             {
               status: 'ready_for_pickup',
               title: 'Ready for Pickup',
-              description: 'Your package is ready at Grand View Restaurant counter.',
+              description: 'Your package is ready at Alfiya Kitchen counter.',
               completed: false,
               current: false,
             },
@@ -219,7 +219,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
             {
               status: 'confirmed',
               title: 'Order Confirmed',
-              description: 'Your order has been accepted by Grand View Restaurant.',
+              description: 'Your order has been accepted by Alfiya Kitchen.',
               completed: true,
               current: true,
               time: timeStr,

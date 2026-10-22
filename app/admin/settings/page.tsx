@@ -21,10 +21,10 @@ export default function AdminSettingsPage() {
   const [currentUser, setCurrentUser] = useState<any | null>(null);
 
   // General Settings State
-  const [name, setName] = useState('Grand View Restaurant');
+  const [name, setName] = useState('Alfiya Kitchen');
   const [tagline, setTagline] = useState('Good Food. Great Moments.');
   const [phone, setPhone] = useState('+91 98765 43210');
-  const [email, setEmail] = useState('dine@grandviewrestaurant.com');
+  const [email, setEmail] = useState('dine@alfiyakitchen.com');
   const [address, setAddress] = useState('Marine Promenade, Waterfront Road, Kochi, Kerala 682001');
   const [openHours, setOpenHours] = useState('11:00 AM – 11:30 PM');
   const [isOpen, setIsOpen] = useState(true);
@@ -64,10 +64,10 @@ export default function AdminSettingsPage() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.general) {
-          setName(data.general.name || 'Grand View Restaurant');
+          setName(data.general.name || 'Alfiya Kitchen');
           setTagline(data.general.tagline || 'Good Food. Great Moments.');
           setPhone(data.general.phone || '+91 98765 43210');
-          setEmail(data.general.email || 'dine@grandviewrestaurant.com');
+          setEmail(data.general.email || 'dine@alfiyakitchen.com');
           setAddress(data.general.address || 'Marine Promenade, Kochi');
           setOpenHours(data.general.openHours || '11:00 AM – 11:30 PM');
           setIsOpen(data.general.isOpen !== false);

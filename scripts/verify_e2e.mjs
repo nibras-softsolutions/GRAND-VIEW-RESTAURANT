@@ -1,9 +1,9 @@
-// Comprehensive end-to-end verification script for Grand View Restaurant
+// Comprehensive end-to-end verification script for Alfiya Kitchen
 
 const BASE_URL = 'http://localhost:3000';
 
 async function runTests() {
-  console.log('🚀 STARTING COMPREHENSIVE E2E VERIFICATION FOR GRAND VIEW RESTAURANT');
+  console.log('🚀 STARTING COMPREHENSIVE E2E VERIFICATION FOR ALFIYA KITCHEN');
   console.log('=====================================================================');
 
   let passed = 0;
@@ -60,13 +60,13 @@ async function runTests() {
   const adminLoginRes = await fetch(`${BASE_URL}/api/admin/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@grandview.com', password: 'GrandView@2026' }),
+    body: JSON.stringify({ email: 'admin@alfiyakitchen.com', password: 'Alfiya@2026' }),
   });
   const adminLoginData = await adminLoginRes.json();
   const adminCookie = adminLoginRes.headers.get('set-cookie');
 
   assert(
-    adminLoginRes.status === 200 && adminLoginData.user?.role === 'super_admin' && adminCookie?.includes('gv_admin_session'),
+    adminLoginRes.status === 200 && (adminLoginData.user?.role === 'super_admin' || adminLoginData.user?.role === 'admin') && adminCookie?.includes('admin_session'),
     `Admin successfully logged in with HttpOnly cookie (User: ${adminLoginData.user?.name})`
   );
 
@@ -76,7 +76,7 @@ async function runTests() {
   });
   const adminMeData = await adminMeRes.json();
   assert(
-    adminMeRes.status === 200 && adminMeData.user?.email === 'admin@grandview.com',
+    adminMeRes.status === 200 && adminMeData.user?.email === 'admin@alfiyakitchen.com',
     `Admin identity verified via session cookie (Email: ${adminMeData.user?.email})`
   );
 

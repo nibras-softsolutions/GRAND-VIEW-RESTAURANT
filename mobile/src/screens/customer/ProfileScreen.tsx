@@ -133,7 +133,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <View style={styles.infoBox}>
           <Ionicons name="restaurant-outline" size={22} color={Colors.primary} />
           <View style={styles.infoCol}>
-            <Text style={styles.infoTitle}>Grand View Restaurant</Text>
+            <Text style={styles.infoTitle}>Alfiya Kitchen</Text>
             <Text style={styles.infoText}>
               Good Food. Great Moments. Operating authentic dining & fast deliveries across Lakshadweep.
             </Text>

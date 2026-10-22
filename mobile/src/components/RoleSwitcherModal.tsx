@@ -64,7 +64,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
               </View>
 
               <Text style={styles.subtitle}>
-                Grand View Restaurant mobile application serves both diners and our delivery partners.
+                Alfiya Kitchen mobile application serves both diners and our delivery partners.
               </Text>
 
               {/* Option 1: Customer Dining */}

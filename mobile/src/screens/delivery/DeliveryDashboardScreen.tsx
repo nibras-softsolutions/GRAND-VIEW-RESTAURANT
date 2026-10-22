@@ -93,7 +93,7 @@ export const DeliveryDashboardScreen: React.FC<DeliveryDashboardScreenProps> = (
               {deliveryPerson?.name || 'Sayed Koya'}
             </Text>
             <Text style={styles.driverPhone}>
-              Grand View Delivery Partner • {deliveryPerson?.phone || '+91 94472 00001'}
+              Alfiya Kitchen Delivery Partner • {deliveryPerson?.phone || '+91 94472 00001'}
             </Text>
           </View>
         </View>

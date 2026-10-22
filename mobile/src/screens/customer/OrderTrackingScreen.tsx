@@ -25,7 +25,7 @@ const STATUS_STEPS: { status: OrderStatus; label: string; desc: string }[] = [
   {
     status: 'pending',
     label: 'Order Placed',
-    desc: 'Your order was received by Grand View kitchen.',
+    desc: 'Your order was received by Alfiya Kitchen kitchen.',
   },
   {
     status: 'confirmed',
@@ -173,7 +173,7 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
             <View style={styles.heroIconCircle}>
               <Ionicons name="restaurant" size={28} color={Colors.white} />
             </View>
-            <Text style={styles.heroTitle}>Grand View Restaurant</Text>
+            <Text style={styles.heroTitle}>Alfiya Kitchen</Text>
             <Text style={styles.orderNumberText}>Order #{orderId}</Text>
             <View style={styles.estTimeBadge}>
               <Ionicons name="time" size={14} color={Colors.primaryDark} />
@@ -269,7 +269,7 @@ export const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
             <View style={styles.riderRow}>
               <View>
                 <Text style={styles.riderName}>{order.deliveryPersonName}</Text>
-                <Text style={styles.riderStatus}>On duty with Grand View</Text>
+                <Text style={styles.riderStatus}>On duty with Alfiya Kitchen</Text>
               </View>
               {order.deliveryPersonPhone && (
                 <TouchableOpacity

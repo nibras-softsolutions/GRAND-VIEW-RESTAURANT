@@ -8,16 +8,16 @@ export async function seedDatabaseIfEmpty() {
   // 1. Check if admin exists, if not seed admins
   const adminCount = await sql`SELECT count(*) as count FROM admin_users;`;
   if (Number(adminCount[0]?.count) === 0) {
-    const superAdminHash = bcrypt.hashSync('GrandView@2026', 10);
+    const superAdminHash = bcrypt.hashSync('Alfiya@2026', 10);
     const managerHash = bcrypt.hashSync('Manager@2026', 10);
     const staffHash = bcrypt.hashSync('Staff@2026', 10);
 
     await sql`
       INSERT INTO admin_users (id, name, email, password_hash, role, active)
       VALUES 
-        ('admin_super', 'Alexander Wright', 'admin@grandview.com', ${superAdminHash}, 'admin', true),
-        ('admin_manager', 'Meera Krishnan', 'manager@grandview.com', ${managerHash}, 'admin', true),
-        ('admin_staff', 'Rahul Verma', 'staff@grandview.com', ${staffHash}, 'admin', true)
+        ('admin_super', 'Alexander Wright', 'admin@alfiyakitchen.com', ${superAdminHash}, 'admin', true),
+        ('admin_manager', 'Meera Krishnan', 'manager@alfiyakitchen.com', ${managerHash}, 'admin', true),
+        ('admin_staff', 'Rahul Verma', 'staff@alfiyakitchen.com', ${staffHash}, 'admin', true)
       ON CONFLICT (email) DO NOTHING;
     `;
   }

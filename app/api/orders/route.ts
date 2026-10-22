@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 
     for (const clientItem of orderData.items) {
       const itemId = clientItem.foodItem?.id || (clientItem as any).id || (clientItem as any).foodId;
-      const itemName = clientItem.foodItem?.name || (clientItem as any).name || 'Grand View Dish';
+      const itemName = clientItem.foodItem?.name || (clientItem as any).name || 'Alfiya Kitchen Dish';
 
       // Match by exact ID or by normalized item name
       const dbItem =
@@ -177,7 +177,7 @@ export async function POST(request: Request) {
     // Final authoritative total
     const authoritativeTotal = calculatedSubtotal + calculatedDeliveryCharge + calculatedTax;
 
-    const orderId = orderData.id || `#GV${Date.now().toString().slice(-6)}`;
+    const orderId = orderData.id || `#AK${Date.now().toString().slice(-6)}`;
     const itemsJson = JSON.stringify(validatedItems);
 
     const initialStatus = 'confirmed';
@@ -187,7 +187,7 @@ export async function POST(request: Request) {
       {
         status: 'confirmed',
         title: 'Order Confirmed',
-        description: 'Received and confirmed by Grand View Restaurant.',
+        description: 'Received and confirmed by Alfiya Kitchen.',
         time: initialTimeStr,
         completed: true,
         current: true,
@@ -217,7 +217,7 @@ export async function POST(request: Request) {
     const timelineJson = JSON.stringify(timeline);
 
     const combinedAddress = isPickup
-      ? 'Front Counter Pickup at Grand View Restaurant'
+      ? 'Front Counter Pickup at Alfiya Kitchen'
       : orderData.deliveryAddress || `${orderData.houseName || ''}, ${orderData.locality || ''}, ${orderData.island || 'Amini'}`;
 
     await sql`

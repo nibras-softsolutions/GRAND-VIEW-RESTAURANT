@@ -2,7 +2,7 @@ import { apiRequest } from './client';
 import { Order, OrderStatus } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const LOCAL_ORDERS_KEY = '@grand_view_my_orders_v1';
+const LOCAL_ORDERS_KEY = '@alfiya_kitchen_my_orders_v1';
 
 export interface CreateOrderPayload {
   orderType: 'delivery' | 'pickup';

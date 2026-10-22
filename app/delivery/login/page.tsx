@@ -58,7 +58,7 @@ function DeliveryLoginForm() {
             <Bike className="w-8 h-8" />
           </div>
           <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-[#C99A4A]">
-            Grand View Restaurant
+            Alfiya Kitchen
           </span>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold mt-1 text-white">
             Delivery Partner Portal

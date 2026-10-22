@@ -21,7 +21,7 @@ interface SavedScreenProps {
   onNavigateToHome?: () => void;
 }
 
-const STORAGE_SAVED_KEY = '@grand_view_saved_dishes_v1';
+const STORAGE_SAVED_KEY = '@alfiya_kitchen_saved_dishes_v1';
 
 const INITIAL_SAVED_ITEMS = [
   {
